@@ -27,6 +27,11 @@ describe("parseClientMessage", () => {
 			sessionId: "s",
 			mode: "acceptEdits",
 		});
+		expect(parseClientMessage('{"type":"set_effort","sessionId":"s","effort":"max"}')).toEqual({
+			type: "set_effort",
+			sessionId: "s",
+			effort: "max",
+		});
 		expect(parseClientMessage('{"type":"export_history","sessionId":"s"}')).toEqual({
 			type: "export_history",
 			sessionId: "s",

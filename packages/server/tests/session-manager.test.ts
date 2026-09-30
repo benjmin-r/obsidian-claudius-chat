@@ -401,6 +401,43 @@ describe("SessionManager", () => {
 		expect(fake.options()?.permissionMode).toBe("acceptEdits"); // and re-applied at spawn
 	});
 
+	it("creates a session with the requested effort", () => {
+		const { fake, manager } = makeManager();
+		const actor = manager.create("claude-opus-5-5", "max");
+		actor.enqueue("hi");
+		expect(actor.effort).toBe("max");
+		expect(fake.options()?.effort).toBe("max");
+	});
+
+	it("a chosen effort survives actor teardown and reconstruction", async () => {
+		const { fake, manager } = makeManager();
+		const actor = await manager.resumeWithHistory("sess-1");
+		actor.enqueue("hi");
+		await actor.setEffort("xhigh");
+		fake.emit({ type: "result", subtype: "success", is_error: false });
+		await flush();
+
+		const reloaded = await manager.reloadSession("sess-1");
+
+		expect(reloaded).not.toBe(actor);
+		expect(reloaded.effort).toBe("xhigh");
+		reloaded.enqueue("continue");
+		expect(fake.options()?.effort).toBe("xhigh");
+	});
+
+	it("forgets an effort that was cleared back to the model default", async () => {
+		const { fake, manager } = makeManager();
+		const actor = await manager.resumeWithHistory("sess-1");
+		actor.enqueue("hi");
+		await actor.setEffort("xhigh");
+		await actor.setEffort(null);
+		fake.emit({ type: "result", subtype: "success", is_error: false });
+		await flush();
+
+		const reloaded = await manager.reloadSession("sess-1");
+		expect(reloaded.effort).toBeUndefined();
+	});
+
 	describe("reapStalledTurns", () => {
 		it("cancels a turn stuck with zero events and reconstructs the actor fresh", async () => {
 			let now = 0;
@@ -631,6 +668,7 @@ describe("SessionManager", () => {
 						throw new Error("boom");
 					},
 					setPermissionMode: async () => undefined,
+					setEffort: async () => undefined,
 				}),
 				now: () => 1,
 				newHandleId: () => "h1",

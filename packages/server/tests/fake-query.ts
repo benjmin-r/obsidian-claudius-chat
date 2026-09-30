@@ -5,7 +5,7 @@
  */
 import { AsyncInputQueue } from "../src/async-queue";
 import type { ContextUsage, QueryHandle, QueryOptions, RunQuery, UserInputMessage } from "../src/ports";
-import type { PermissionMode, SdkMessage } from "@occ/protocol";
+import type { EffortLevel, PermissionMode, SdkMessage } from "@occ/protocol";
 
 export interface FakeQuery {
 	runQuery: RunQuery;
@@ -16,6 +16,8 @@ export interface FakeQuery {
 	interrupted(): boolean;
 	disposed(): boolean;
 	modeSet(): PermissionMode | undefined;
+	/** Effort values passed to `handle.setEffort`, in order (null = cleared). */
+	effortCalls(): (EffortLevel | null)[];
 	/** Set what `handle.getContextUsage()` resolves to (or rejects, for error-path tests). */
 	setContextUsage(result: ContextUsage | null | (() => Promise<ContextUsage | null>)): void;
 }
@@ -27,6 +29,7 @@ export function makeFakeQuery(): FakeQuery {
 	let didInterrupt = false;
 	let didDispose = false;
 	let lastMode: PermissionMode | undefined;
+	const efforts: (EffortLevel | null)[] = [];
 	let contextUsage: ContextUsage | null | (() => Promise<ContextUsage | null>) = null;
 
 	const runQuery: RunQuery = (prompt, options) => {
@@ -39,6 +42,9 @@ export function makeFakeQuery(): FakeQuery {
 			},
 			setPermissionMode: async (mode) => {
 				lastMode = mode;
+			},
+			setEffort: async (level) => {
+				efforts.push(level);
 			},
 			getContextUsage: () => (typeof contextUsage === "function" ? contextUsage() : Promise.resolve(contextUsage)),
 			dispose: async () => {
@@ -60,6 +66,7 @@ export function makeFakeQuery(): FakeQuery {
 		interrupted: () => didInterrupt,
 		disposed: () => didDispose,
 		modeSet: () => lastMode,
+		effortCalls: () => efforts,
 		setContextUsage: (result) => {
 			contextUsage = result;
 		},

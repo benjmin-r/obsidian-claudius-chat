@@ -9,8 +9,8 @@
  * rewriting of `session_status`.
  */
 
-import type { BridgeEvent, ClientMessage } from "@occ/protocol";
-import { PROTOCOL_VERSION } from "@occ/protocol";
+import type { BridgeEvent, ClientMessage, EffortLevel } from "@occ/protocol";
+import { PROTOCOL_VERSION, isEffortLevel } from "@occ/protocol";
 import type { SessionActor } from "./session-actor";
 import type { SessionManager } from "./session-manager";
 
@@ -80,7 +80,7 @@ export class Connection {
 				this.withActor(msg.sessionId, (a) => void a.interrupt());
 				return {};
 			case "new_session":
-				this.onNewSession(msg.model);
+				this.onNewSession(msg.model, isEffortLevel(msg.effort) ? msg.effort : undefined);
 				return {};
 			case "resume_session":
 				this.onResume(msg.sessionId, msg.reload ?? false);
@@ -107,6 +107,13 @@ export class Connection {
 				return {};
 			case "set_permission_mode":
 				this.withActor(msg.sessionId, (actor) => void actor.setPermissionMode(msg.mode));
+				return {};
+			case "set_effort":
+				// null = back to the model default; anything else must be a known level.
+				if (msg.effort === null || isEffortLevel(msg.effort)) {
+					const effort: EffortLevel | null = msg.effort;
+					this.withActor(msg.sessionId, (actor) => void actor.setEffort(effort));
+				}
 				return {};
 			case "list_sessions":
 				this.deps.manager
@@ -175,8 +182,8 @@ export class Connection {
 		actor.enqueue(text);
 	}
 
-	private onNewSession(model?: string): void {
-		const actor = this.deps.manager.create(model);
+	private onNewSession(model?: string, effort?: EffortLevel): void {
+		const actor = this.deps.manager.create(model, effort);
 		this.deps.writers.claim(actor, this); // the creator is the writer
 		this.attach(actor); // attach AFTER claiming so the first status reports isWriter:true
 	}

@@ -1,6 +1,6 @@
 import { App } from "obsidian";
 import { ClaudeChatSettingTab } from "../src/settings";
-import { DEFAULT_SETTINGS, type ClaudeChatSettings } from "../src/settings-types";
+import { DEFAULT_SETTINGS, effortFromSetting, type ClaudeChatSettings } from "../src/settings-types";
 
 function fakePlugin(settings: ClaudeChatSettings = { ...DEFAULT_SETTINGS }) {
 	return { app: new App(), settings, saveSettings: jest.fn().mockResolvedValue(undefined) };
@@ -14,6 +14,19 @@ describe("DEFAULT_SETTINGS", () => {
 	});
 });
 
+describe("effortFromSetting", () => {
+	it("maps real levels through and everything else to the model default", () => {
+		expect(effortFromSetting("xhigh")).toBe("xhigh");
+		expect(effortFromSetting("default")).toBeUndefined();
+		expect(effortFromSetting(undefined)).toBeUndefined();
+		expect(effortFromSetting("bogus")).toBeUndefined();
+	});
+
+	it("defaults to the model's own level", () => {
+		expect(DEFAULT_SETTINGS.defaultEffort).toBe("default");
+	});
+});
+
 describe("ClaudeChatSettingTab", () => {
 	it("renders all fields including a password-masked token", () => {
 		const plugin = fakePlugin();
@@ -23,7 +36,7 @@ describe("ClaudeChatSettingTab", () => {
 		const inputs = tab.containerEl.querySelectorAll("input");
 		const selects = tab.containerEl.querySelectorAll("select");
 		expect(inputs.length).toBeGreaterThanOrEqual(3);
-		expect(selects.length).toBe(2); // model + default-mode dropdowns
+		expect(selects.length).toBe(3); // model + default-reasoning + default-mode dropdowns
 		expect(tab.containerEl.querySelector('input[type="password"]')).not.toBeNull();
 	});
 

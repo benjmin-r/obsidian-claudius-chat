@@ -385,6 +385,49 @@ describe("Connection session flow", () => {
 		expect(fake.modeSet()).toBe("acceptEdits");
 	});
 
+	it("starts a new session with the requested effort and reports it in status", () => {
+		const { fake, mkConn } = setup();
+		const { conn, sent } = mkConn();
+		conn.handle({ type: "hello", token: "secret" });
+		conn.handle({ type: "new_session", model: "claude-opus-5-5", effort: "max" });
+		expect(sent.find((e) => e.type === "session_status")).toMatchObject({ effort: "max" });
+		conn.handle({ type: "user_message", sessionId: sessionIdFrom(sent), text: "go" });
+		expect(fake.options()?.effort).toBe("max");
+	});
+
+	it("ignores an unknown effort on new_session", () => {
+		const { mkConn } = setup();
+		const { conn, sent } = mkConn();
+		conn.handle({ type: "hello", token: "secret" });
+		conn.handle({ type: "new_session", model: "claude-opus-5-5", effort: "ultra" as never });
+		expect(sent.find((e) => e.type === "session_status")).not.toHaveProperty("effort");
+	});
+
+	it("routes set_effort to the actor, including null to clear", async () => {
+		const { fake, mkConn } = setup();
+		const { conn, sent } = mkConn();
+		conn.handle({ type: "hello", token: "secret" });
+		conn.handle({ type: "new_session", model: "claude-opus-5-5" });
+		const sessionId = sessionIdFrom(sent);
+		conn.handle({ type: "user_message", sessionId, text: "go" });
+		conn.handle({ type: "set_effort", sessionId, effort: "xhigh" });
+		conn.handle({ type: "set_effort", sessionId, effort: null });
+		await flush();
+		expect(fake.effortCalls()).toEqual(["xhigh", null]);
+	});
+
+	it("drops a set_effort carrying an unknown level", async () => {
+		const { fake, mkConn } = setup();
+		const { conn, sent } = mkConn();
+		conn.handle({ type: "hello", token: "secret" });
+		conn.handle({ type: "new_session", model: "claude-opus-5-5" });
+		const sessionId = sessionIdFrom(sent);
+		conn.handle({ type: "user_message", sessionId, text: "go" });
+		conn.handle({ type: "set_effort", sessionId, effort: "ultra" as never });
+		await flush();
+		expect(fake.effortCalls()).toEqual([]);
+	});
+
 	it("blocks a send (read-only) while a CLI holds the session; allows when none", async () => {
 		let severity: ExternalSeverity = "busy";
 		const fake = makeFakeQuery();

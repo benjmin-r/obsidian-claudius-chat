@@ -5,7 +5,7 @@
  * network and no timers.
  */
 
-import type { BridgeEvent, ClientMessage, PermissionMode } from "@occ/protocol";
+import type { BridgeEvent, ClientMessage, EffortLevel, PermissionMode } from "@occ/protocol";
 
 export interface WsLike {
 	send(data: string): void;
@@ -170,8 +170,8 @@ export class BridgeClient {
 
 	// -- outbound -------------------------------------------------------------
 
-	newSession(model?: string): void {
-		this.send({ type: "new_session", model });
+	newSession(model?: string, effort?: EffortLevel): void {
+		this.send({ type: "new_session", model, ...(effort ? { effort } : {}) });
 	}
 
 	resumeSession(sessionId: string, reload = false): void {
@@ -202,6 +202,11 @@ export class BridgeClient {
 
 	setPermissionMode(sessionId: string, mode: PermissionMode): void {
 		this.send({ type: "set_permission_mode", sessionId, mode });
+	}
+
+	/** Change a session's reasoning effort live; `null` clears it back to the model's default. */
+	setEffort(sessionId: string, effort: EffortLevel | null): void {
+		this.send({ type: "set_effort", sessionId, effort });
 	}
 
 	userMessage(sessionId: string, text: string): void {

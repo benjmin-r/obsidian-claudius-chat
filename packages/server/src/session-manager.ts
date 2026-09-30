@@ -7,6 +7,7 @@
  */
 
 import {
+	type EffortLevel,
 	estimateContextUsedPercent,
 	mapHistoryMessages,
 	type PermissionMode,
@@ -59,6 +60,8 @@ export class SessionManager {
 	 * reconstruction silently fell back to "default".
 	 */
 	private readonly lastPermissionMode = new Map<string, PermissionMode>();
+	/** Same idea for reasoning effort; an absent entry means "model default". */
+	private readonly lastEffort = new Map<string, EffortLevel>();
 
 	private readonly detect: DetectExternalActivity;
 	private readonly maxLiveSessions: number;
@@ -156,13 +159,14 @@ export class SessionManager {
 	}
 
 	/** Start a brand-new session. */
-	create(model?: string): SessionActor {
+	create(model?: string, effort?: EffortLevel): SessionActor {
 		const handleId = this.deps.newHandleId();
 		const actor = new SessionActor(this.deps, {
 			handleId,
 			cwd: this.config.cwd,
 			model: model ?? this.config.defaultModel,
 			bufferLimit: this.config.bufferLimit,
+			initialEffort: effort,
 		});
 		this.register(actor, handleId);
 		return actor;
@@ -179,6 +183,7 @@ export class SessionManager {
 			resume: sdkSessionId,
 			bufferLimit: this.config.bufferLimit,
 			initialPermissionMode: this.lastPermissionMode.get(sdkSessionId),
+			initialEffort: this.lastEffort.get(sdkSessionId),
 		});
 		this.register(actor, sdkSessionId);
 		return actor;
@@ -238,6 +243,7 @@ export class SessionManager {
 			resume: sessionId,
 			bufferLimit: this.config.bufferLimit,
 			initialPermissionMode: this.lastPermissionMode.get(sessionId),
+			initialEffort: this.lastEffort.get(sessionId),
 		});
 		this.register(actor, sessionId);
 		try {
@@ -408,6 +414,8 @@ export class SessionManager {
 				const sid = actor.sdkSessionId;
 				if (sid && this.index.get(sid) !== actor) this.index.set(sid, actor);
 				this.lastPermissionMode.set(actor.id, actor.permissionMode);
+				if (actor.effort) this.lastEffort.set(actor.id, actor.effort);
+				else this.lastEffort.delete(actor.id);
 			},
 			{ internal: true }
 		);

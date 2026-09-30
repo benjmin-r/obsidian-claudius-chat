@@ -24,6 +24,7 @@ const CLIENT_MESSAGE_TYPES = new Set([
 	"close_session",
 	"load_older",
 	"set_permission_mode",
+	"set_effort",
 	"list_sessions",
 	"export_history",
 	"ping",

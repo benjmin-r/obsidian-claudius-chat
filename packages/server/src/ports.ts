@@ -5,7 +5,7 @@
  */
 
 import type { ExternalActivity } from "./external-activity";
-import type { HistoryMessage, PermissionMode, SdkMessage } from "@occ/protocol";
+import type { EffortLevel, HistoryMessage, PermissionMode, SdkMessage } from "@occ/protocol";
 
 export interface PermissionAllow {
 	behavior: "allow";
@@ -30,6 +30,8 @@ export interface QueryOptions {
 	cwd: string;
 	model: string;
 	permissionMode: PermissionMode;
+	/** reasoning effort; omitted = the model's own default. */
+	effort?: EffortLevel;
 	/** present only when reconstructing a session after a server restart. */
 	resume?: string;
 	canUseTool: CanUseTool;
@@ -56,6 +58,8 @@ export interface QueryHandle extends AsyncIterable<SdkMessage> {
 	/** Cancel the in-flight TURN only; the session (and its subprocess) stays alive. */
 	interrupt(): Promise<void>;
 	setPermissionMode(mode: PermissionMode): Promise<void>;
+	/** Change reasoning effort for subsequent turns; `null` clears back to the model's default. */
+	setEffort(level: EffortLevel | null): Promise<void>;
 	/**
 	 * Terminate the session for good: close the async generator so the SDK tears
 	 * down the CLI subprocess. Unlike {@link interrupt}, this frees the OS process —

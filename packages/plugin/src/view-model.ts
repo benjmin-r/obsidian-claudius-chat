@@ -7,6 +7,7 @@
 
 import type {
 	BridgeEvent,
+	EffortLevel,
 	ExternalSeverity,
 	PermissionMode,
 	PermissionRequestEvent,
@@ -105,6 +106,8 @@ export interface ChatState {
 	contextUsedPercent?: number;
 	/** the session's agent permission mode. */
 	permissionMode: PermissionMode;
+	/** the session's explicit reasoning effort; undefined = the model's own default. */
+	effort?: EffortLevel;
 	/** a live external (CLI) process holds the session → the plugin is read-only. */
 	externalActivity: ExternalSeverity;
 	/** the external holder's entrypoint, for the banner ("cli" | "sdk-cli" | …). */
@@ -211,6 +214,8 @@ export function applyEvent(state: ChatState, event: BridgeEvent): ChatState {
 				isWriter: event.isWriter,
 				hasOlderHistory: event.hasOlderHistory ?? state.hasOlderHistory,
 				permissionMode: event.permissionMode ?? state.permissionMode,
+				// Not `??`: an absent effort means "cleared to the model default", not "unchanged".
+				effort: event.effort,
 				contextUsedPercent: event.contextUsedPercent ?? state.contextUsedPercent,
 				// a resolved/expired request is implied once we're no longer awaiting.
 				pendingPermission: event.status === "awaiting_permission" ? state.pendingPermission : undefined,

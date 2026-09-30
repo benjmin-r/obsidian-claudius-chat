@@ -4,7 +4,10 @@
  * gotcha). No Node APIs here.
  */
 
-import type { PermissionMode } from "@occ/protocol";
+import { isEffortLevel, type EffortLevel, type PermissionMode } from "@occ/protocol";
+
+/** A reasoning level, or "default" to leave it to the model. */
+export type EffortSetting = EffortLevel | "default";
 
 export interface ClaudeChatSettings {
 	/** ws:// URL of the SDK server on the tailnet, including port. */
@@ -13,6 +16,8 @@ export interface ClaudeChatSettings {
 	token: string;
 	/** Default model for new sessions. */
 	defaultModel: string;
+	/** Reasoning level for new sessions; clamped to what the chosen model supports. */
+	defaultEffort: EffortSetting;
 	/** Permission mode applied to new sessions (the toolbar mode picker's starting value). */
 	defaultPermissionMode: PermissionMode;
 	/** Reconnect automatically after a dropped connection. */
@@ -43,6 +48,7 @@ export const DEFAULT_SETTINGS: ClaudeChatSettings = {
 	serverUrl: "ws://your-host.your-tailnet.ts.net:8765",
 	token: "",
 	defaultModel: "claude-sonnet-5-5",
+	defaultEffort: "default",
 	defaultPermissionMode: "default",
 	autoReconnect: true,
 	reconnectDelayMs: 1500,
@@ -60,6 +66,23 @@ export const MODEL_OPTIONS: Record<string, string> = {
 	"claude-sonnet-5": "Sonnet 5",
 	"claude-haiku-4-5-20251001": "Haiku 4.5",
 };
+
+/** Display names for reasoning levels (sentence case). */
+export const EFFORT_LABELS: Record<EffortLevel, string> = {
+	low: "Low",
+	medium: "Medium",
+	high: "High",
+	xhigh: "Extra high",
+	max: "Max",
+};
+
+/** Label for "no explicit level" — the model picks its own. */
+export const EFFORT_DEFAULT_LABEL = "Model default";
+
+/** Resolve a stored setting to a level; anything unrecognized (incl. "default") means the model's own. */
+export function effortFromSetting(value: unknown): EffortLevel | undefined {
+	return isEffortLevel(value) ? value : undefined;
+}
 
 /** Permission modes offered in the settings dropdown (labels mirror the toolbar picker). */
 export const PERMISSION_MODE_OPTIONS: Record<PermissionMode, string> = {

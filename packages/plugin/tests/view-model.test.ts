@@ -197,6 +197,21 @@ describe("view-model", () => {
 		expect(s.permissionMode).toBe("acceptEdits");
 	});
 
+	it("session_status carries the reasoning effort, and its absence clears it", () => {
+		const status = {
+			type: "session_status" as const,
+			sessionId: SID,
+			status: "idle" as const,
+			model: "m",
+			cwd: "/v",
+			isWriter: true,
+		};
+		let s = applyEvent(initialState("m"), { ...status, effort: "max" });
+		expect(s.effort).toBe("max");
+		s = applyEvent(s, status);
+		expect(s.effort).toBeUndefined();
+	});
+
 	it("attach_reset clears the transcript so the replay rebuilds it", () => {
 		let s = reduce([
 			{ type: "assistant_text_delta", sessionId: SID, text: "old" },

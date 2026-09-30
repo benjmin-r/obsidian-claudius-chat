@@ -271,6 +271,94 @@ describe("SessionActor", () => {
 		expect(actor.statusEvent().permissionMode).toBe("acceptEdits");
 	});
 
+	it("starts with the model default effort and passes a seeded one to the query", () => {
+		const { fake, actor } = makeActor();
+		actor.enqueue("hi");
+		expect(fake.options()!.effort).toBeUndefined();
+		expect(actor.statusEvent().effort).toBeUndefined();
+
+		const seeded = makeFakeQuery();
+		const a = new SessionActor(
+			{ runQuery: seeded.runQuery, now: () => 1 },
+			{ handleId: "h", cwd: "/v", model: "claude-opus-5-5", initialEffort: "xhigh" }
+		);
+		a.enqueue("hi");
+		expect(seeded.options()!.effort).toBe("xhigh");
+		expect(a.statusEvent().effort).toBe("xhigh");
+	});
+
+	it("clamps a seeded effort the model doesn't support", () => {
+		const fake = makeFakeQuery();
+		const a = new SessionActor(
+			{ runQuery: fake.runQuery, now: () => 1 },
+			{ handleId: "h", cwd: "/v", model: "claude-sonnet-5-5", initialEffort: "xhigh" }
+		);
+		expect(a.effort).toBe("high");
+		const haiku = new SessionActor(
+			{ runQuery: fake.runQuery, now: () => 1 },
+			{ handleId: "h2", cwd: "/v", model: "claude-haiku-4-5-20251001", initialEffort: "high" }
+		);
+		expect(haiku.effort).toBeUndefined();
+	});
+
+	it("changes effort live, broadcasts it, and clears back to the default with null", async () => {
+		const { fake, actor } = makeActor();
+		const events = collect(actor);
+		actor.enqueue("hi");
+		await actor.setEffort("max");
+		expect(fake.effortCalls()).toEqual(["max"]);
+		expect(actor.effort).toBe("max");
+		expect(events.filter((e) => e.type === "session_status").pop()).toMatchObject({ effort: "max" });
+
+		await actor.setEffort(null);
+		expect(fake.effortCalls()).toEqual(["max", null]);
+		expect(actor.effort).toBeUndefined();
+		expect(events.filter((e) => e.type === "session_status").pop()).not.toHaveProperty("effort");
+	});
+
+	it("clamps a live effort change to what the model supports", async () => {
+		const fake = makeFakeQuery();
+		const a = new SessionActor({ runQuery: fake.runQuery, now: () => 1 }, { handleId: "h", cwd: "/v", model: "claude-sonnet-5-5" });
+		a.enqueue("hi");
+		await a.setEffort("xhigh");
+		expect(fake.effortCalls()).toEqual(["high"]);
+		expect(a.effort).toBe("high");
+	});
+
+	it("can set effort before the query has started (used at spawn)", async () => {
+		const { fake, actor } = makeActor();
+		await actor.setEffort("low");
+		expect(actor.effort).toBe("low");
+		actor.enqueue("hi");
+		expect(fake.options()!.effort).toBe("low");
+	});
+
+	it("keeps the old effort and surfaces an error when the change is rejected", async () => {
+		const events: BridgeEvent[] = [];
+		const actor = new SessionActor(
+			{
+				runQuery: () => ({
+					async *[Symbol.asyncIterator]() {
+						/* idle */
+					},
+					interrupt: async () => undefined,
+					dispose: async () => undefined,
+					setPermissionMode: async () => undefined,
+					setEffort: async () => {
+						throw new Error("nope");
+					},
+				}),
+				now: () => 1,
+			},
+			{ handleId: "h", cwd: "/v", model: "claude-opus-5-5" }
+		);
+		actor.subscribe((e) => events.push(e));
+		actor.enqueue("hi");
+		await actor.setEffort("max");
+		expect(events.some((e) => e.type === "error" && /Couldn't change reasoning level: nope/.test(e.message))).toBe(true);
+		expect(actor.effort).toBeUndefined();
+	});
+
 	it("surfaces an error (no crash) when the mode change is rejected", async () => {
 		const events: BridgeEvent[] = [];
 		const actor = new SessionActor(
@@ -284,6 +372,7 @@ describe("SessionActor", () => {
 					setPermissionMode: async () => {
 						throw new Error("not allowed");
 					},
+					setEffort: async () => undefined,
 				}),
 				now: () => 1,
 			},
@@ -308,6 +397,7 @@ describe("SessionActor", () => {
 					interrupt: async () => undefined,
 					dispose: async () => undefined,
 					setPermissionMode: async () => undefined,
+					setEffort: async () => undefined,
 				}),
 				now: () => 1,
 			},

@@ -29,6 +29,8 @@ import type {
 interface SdkQuery extends AsyncGenerator<unknown, void> {
 	interrupt(): Promise<void>;
 	setPermissionMode(mode: string): Promise<void>;
+	/** Shallow-merge into the flag-settings layer; `null` clears a key. Streaming-input mode only. */
+	applyFlagSettings(settings: Record<string, unknown>): Promise<void>;
 	/** null keeps the default thinking budget; 'summarized' surfaces the reasoning text. */
 	setMaxThinkingTokens(max: number | null, display?: "summarized" | "omitted" | null): Promise<void>;
 	/** Forcefully ends the query and terminates the CLI subprocess (per SDK docs). */
@@ -47,6 +49,7 @@ export const runQuery: RunQuery = (prompt, options) => {
 			permissionMode: options.permissionMode, // 'default' routes tools through canUseTool
 			includePartialMessages: true, // incremental text streaming
 			canUseTool: options.canUseTool as never,
+			...(options.effort ? { effort: options.effort } : {}),
 			...(options.resume ? { resume: options.resume } : {}),
 		} as never,
 	}) as unknown as SdkQuery;
@@ -63,6 +66,9 @@ export const runQuery: RunQuery = (prompt, options) => {
 		[Symbol.asyncIterator]: () => q[Symbol.asyncIterator]() as AsyncIterator<SdkMessage>,
 		interrupt: () => q.interrupt(),
 		setPermissionMode: (mode) => q.setPermissionMode(mode),
+		// effortLevel is the live-settable twin of Options.effort (verified to accept "max" too,
+		// and to fall back to the model default on null — TDL-20260930-001).
+		setEffort: (level) => q.applyFlagSettings({ effortLevel: level }),
 		getContextUsage: async () => {
 			try {
 				const { percentage, totalTokens, maxTokens } = await q.getContextUsage();

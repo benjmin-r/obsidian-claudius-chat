@@ -15,12 +15,14 @@
 
 import {
 	type BridgeEvent,
+	type EffortLevel,
 	type PermissionMode,
 	type PermissionRequestEvent,
 	type RenderEvent,
 	type SessionStatus,
 	type SessionStatusEvent,
 	type SessionSummary,
+	clampEffort,
 	isDestructive,
 	mapSdkEvent,
 	sdkSessionId,
@@ -57,6 +59,8 @@ export interface SessionActorOptions {
 	 * otherwise lives only on the actor instance and is lost on every teardown.
 	 */
 	initialPermissionMode?: PermissionMode;
+	/** Seed the reasoning effort (same survive-reconstruction purpose as the mode); omitted = model default. */
+	initialEffort?: EffortLevel;
 }
 
 type Listener = (event: BridgeEvent) => void;
@@ -79,6 +83,8 @@ export class SessionActor {
 	private disposed = false;
 	private _status: SessionStatus = "idle";
 	private _permissionMode: PermissionMode;
+	/** explicit reasoning effort; undefined = the model's own default. */
+	private _effort: EffortLevel | undefined;
 	private _external: ExternalActivity = { severity: "none" };
 	private _sdkSessionId: string | undefined;
 	private _updatedAt: number;
@@ -97,6 +103,7 @@ export class SessionActor {
 		this.bufferLimit = opts.bufferLimit ?? DEFAULT_BUFFER_LIMIT;
 		this._sdkSessionId = opts.resume;
 		this._permissionMode = opts.initialPermissionMode ?? "default";
+		this._effort = clampEffort(opts.model, opts.initialEffort);
 		this._updatedAt = deps.now();
 	}
 
@@ -119,6 +126,10 @@ export class SessionActor {
 
 	get permissionMode(): PermissionMode {
 		return this._permissionMode;
+	}
+
+	get effort(): EffortLevel | undefined {
+		return this._effort;
 	}
 
 	/**
@@ -165,6 +176,7 @@ export class SessionActor {
 			cwd: this.opts.cwd,
 			model: this.opts.model,
 			permissionMode: this._permissionMode,
+			effort: this._effort,
 			resume: this.opts.resume,
 			canUseTool: this.canUseTool,
 		});
@@ -229,6 +241,23 @@ export class SessionActor {
 			// A rejected control request must never crash the server; surface it.
 			const message = err instanceof Error ? err.message : String(err);
 			this.broadcast({ type: "error", sessionId: this.id, message: `Couldn't change mode: ${message}` });
+		}
+	}
+
+	/**
+	 * Change reasoning effort live (applies from the next turn); `null` clears it back to
+	 * the model's default. Clamped to what this model supports. Before the query starts
+	 * there is nothing to call — the value is simply used at spawn.
+	 */
+	async setEffort(level: EffortLevel | null): Promise<void> {
+		const next = clampEffort(this.opts.model, level ?? undefined);
+		try {
+			await this.handle?.setEffort(next ?? null);
+			this._effort = next; // only commit on success
+			this.broadcast(this.statusEvent());
+		} catch (err) {
+			const message = err instanceof Error ? err.message : String(err);
+			this.broadcast({ type: "error", sessionId: this.id, message: `Couldn't change reasoning level: ${message}` });
 		}
 	}
 
@@ -386,6 +415,7 @@ export class SessionActor {
 			isWriter: false, // the transport rewrites this per-connection.
 			hasOlderHistory: this.olderHistory.length > 0,
 			permissionMode: this._permissionMode,
+			...(this._effort ? { effort: this._effort } : {}),
 			...(this._contextUsedPercent !== undefined ? { contextUsedPercent: this._contextUsedPercent } : {}),
 		};
 	}

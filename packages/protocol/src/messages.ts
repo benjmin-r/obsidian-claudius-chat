@@ -7,6 +7,8 @@
  * Pure types + constants only; no runtime I/O.
  */
 
+import type { EffortLevel } from "./effort";
+
 /** Bumped whenever the wire shapes change incompatibly. Validated on `hello`. */
 export const PROTOCOL_VERSION = 1;
 
@@ -183,6 +185,8 @@ export interface SessionStatusEvent {
 	hasOlderHistory?: boolean;
 	/** the session's current agent permission mode. */
 	permissionMode?: PermissionMode;
+	/** the session's explicit reasoning effort; absent = the model's own default. */
+	effort?: EffortLevel;
 	/**
 	 * Context window usage, 0-100 (share of the window used). An estimate derived
 	 * from the stored transcript until the session's first live turn in this
@@ -316,6 +320,8 @@ export interface InterruptMessage {
 export interface NewSessionMessage {
 	type: "new_session";
 	model?: string;
+	/** starting reasoning effort; omitted = the model's own default. */
+	effort?: EffortLevel;
 }
 
 /** Reattach / resume an existing session by id. */
@@ -359,6 +365,13 @@ export interface SetPermissionModeMessage {
 	mode: PermissionMode;
 }
 
+/** Change a session's reasoning effort, live; `null` clears it back to the model's default. */
+export interface SetEffortMessage {
+	type: "set_effort";
+	sessionId: string;
+	effort: EffortLevel | null;
+}
+
 /** Request the next older page of a resumed session's transcript. */
 export interface LoadOlderMessage {
 	type: "load_older";
@@ -399,6 +412,7 @@ export type ClientMessage =
 	| ArchiveSessionMessage
 	| CloseSessionMessage
 	| SetPermissionModeMessage
+	| SetEffortMessage
 	| LoadOlderMessage
 	| ListSessionsMessage
 	| ExportHistoryMessage

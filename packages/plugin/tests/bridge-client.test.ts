@@ -110,6 +110,9 @@ describe("BridgeClient", () => {
 		h.client.connect();
 		h.last().fireOpen();
 		h.client.newSession("claude-x");
+		h.client.newSession("claude-opus-5-5", "max");
+		h.client.setEffort("s1", "high");
+		h.client.setEffort("s1", null);
 		h.client.userMessage("s1", "hi");
 		h.client.decide("s1", "t1", true);
 		h.client.interrupt("s1");
@@ -121,6 +124,9 @@ describe("BridgeClient", () => {
 		h.client.exportHistory("s1");
 		const frames = h.sentFrames();
 		expect(frames).toContainEqual({ type: "new_session", model: "claude-x" });
+		expect(frames).toContainEqual({ type: "new_session", model: "claude-opus-5-5", effort: "max" });
+		expect(frames).toContainEqual({ type: "set_effort", sessionId: "s1", effort: "high" });
+		expect(frames).toContainEqual({ type: "set_effort", sessionId: "s1", effort: null });
 		expect(frames).toContainEqual({ type: "user_message", sessionId: "s1", text: "hi" });
 		expect(frames).toContainEqual({ type: "permission_decision", sessionId: "s1", toolUseId: "t1", allow: true });
 		expect(frames).toContainEqual({ type: "interrupt", sessionId: "s1" });

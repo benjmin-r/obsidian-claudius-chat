@@ -6,6 +6,35 @@ Each entry is ≤200 words (longer when a hard-won investigation is worth preser
 
 ---
 
+## TDL-20260930-001: Reasoning level — static per-family table, live-changeable via `effortLevel`
+
+**Date:** 2026-09-30
+**Status:** Implemented
+
+**Context:** wanted a reasoning-level picker (per model) plus a default in
+settings, without growing the toolbar, and changeable on a running session.
+
+**Verified SDK facts:** `Options.effort` sets it at spawn.
+`Query.applyFlagSettings({ effortLevel })` changes it live — a Stop hook's
+`input.effort.level` showed `low` → `max` → (`null`) `high` on Sonnet 5.5, so
+`max` works live despite the `Settings.effortLevel` type omitting it, and `null`
+falls back to the model default. Haiku silently ignores it.
+`supportedModels()` only lists aliases (opus/sonnet/haiku), not our model ids,
+and needs a live query.
+
+**Decision:** a static table keyed on model family in `protocol/src/effort.ts`
+(opus: low–max incl. xhigh; sonnet: no xhigh; haiku: none) with `clampEffort()`
+(unsupported → nearest lower level). Both server and plugin clamp. The picker is
+a section appended to the model menu (hidden when the model has no levels); it
+targets the open session (`set_effort`, live) or the next new session. Effort
+is remembered per session in-process like the permission mode; a picker-resume
+re-applies the settings default if the server has none. Opus `xhigh` live was
+not confirmed end to end (the test turn never completed).
+
+**Files:** `protocol/src/{effort,messages}.ts`, `server/src/{session-actor,session-manager,connection,sdk-adapter}.ts`, `plugin/src/{chat-view,settings}.ts`.
+
+---
+
 ## TDL-20260825-003: Conversation export — drop the `title` field; datetime frontmatter Obsidian actually recognizes
 
 **Date:** 2026-08-25

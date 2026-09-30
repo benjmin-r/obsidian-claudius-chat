@@ -1,5 +1,5 @@
 import { App, ItemView, MarkdownRenderer, Menu, Modal, normalizePath, Notice, Platform, setIcon, type WorkspaceLeaf } from "obsidian";
-import type { BridgeEvent, PermissionMode, RenderEvent, SessionSummary } from "@occ/protocol";
+import { clampEffort, supportedEffortLevels, type BridgeEvent, type EffortLevel, type PermissionMode, type RenderEvent, type SessionSummary } from "@occ/protocol";
 import type ClaudeChatPlugin from "./main";
 import { BridgeClient, type WsLike } from "./bridge-client";
 import { DebugLog } from "./debug-log";
@@ -8,7 +8,7 @@ import { renderMarkdown } from "./export-markdown";
 import { truncateToolOutput, type ExportMeta } from "./export-shared";
 import { writeExportFile } from "./export-writer";
 import { conversationLinkFromParts } from "./link-insert";
-import { MODEL_OPTIONS } from "./settings-types";
+import { EFFORT_DEFAULT_LABEL, EFFORT_LABELS, MODEL_OPTIONS, effortFromSetting } from "./settings-types";
 import {
 	applyEvent,
 	appendUserMessage,
@@ -92,6 +92,10 @@ export class ChatView extends ItemView {
 	/** desired permission mode for new sessions; applied once a session starts. */
 	private desiredMode: PermissionMode;
 	private applyDesiredMode = false;
+	/** reasoning level for the NEXT new session (undefined = model default); an open session has its own. */
+	private selectedEffort: EffortLevel | undefined;
+	/** set on a picker resume: re-apply the settings default if the server has no effort for the session. */
+	private applyDefaultEffort = false;
 	private messagesEl!: HTMLElement;
 	private messagesInnerEl!: HTMLElement;
 	private resizeObserver?: ResizeObserver;
@@ -148,6 +152,7 @@ export class ChatView extends ItemView {
 		super(leaf);
 		this.selectedModel = plugin.settings.defaultModel;
 		this.desiredMode = plugin.settings.defaultPermissionMode;
+		this.selectedEffort = effortFromSetting(plugin.settings.defaultEffort);
 		this.state = initialState(plugin.settings.defaultModel);
 	}
 
@@ -769,6 +774,7 @@ export class ChatView extends ItemView {
 		// Re-assert our configured default here too, the same way startNewSession does,
 		// so the setting applies consistently regardless of server-side state.
 		this.applyDesiredMode = true;
+		this.applyDefaultEffort = true;
 		// Clear the current transcript; the resumed session's history replays in.
 		this.state = { ...initialState(this.selectedModel), connection: this.state.connection };
 		this.client.resumeSession(sessionId, /* reload */ true);
@@ -799,7 +805,7 @@ export class ChatView extends ItemView {
 			// session_status.
 			this.pendingText = text;
 			this.applyDesiredMode = true;
-			this.client.newSession(this.selectedModel);
+			this.client.newSession(this.selectedModel, clampEffort(this.selectedModel, this.selectedEffort));
 		}
 		this.render();
 	}
@@ -882,6 +888,13 @@ export class ChatView extends ItemView {
 				if (this.desiredMode !== "default" && this.desiredMode !== event.permissionMode) {
 					this.client.setPermissionMode(event.sessionId, this.desiredMode);
 				}
+			}
+			// A resumed session whose effort the server no longer knows (e.g. after a server
+			// restart) gets the configured default, like the permission mode above.
+			if (this.applyDefaultEffort) {
+				this.applyDefaultEffort = false;
+				const want = clampEffort(event.model, effortFromSetting(this.plugin.settings.defaultEffort));
+				if (want && !event.effort) this.client.setEffort(event.sessionId, want);
 			}
 		}
 		if (event.type === "error") new Notice(`Claude: ${event.message}`, 5000);
@@ -1315,7 +1328,39 @@ export class ChatView extends ItemView {
 					})
 			);
 		}
+		this.addReasoningSection(menu);
 		menu.showAtMouseEvent(evt);
+	}
+
+	/**
+	 * Reasoning-level choices, appended to the model menu so the toolbar stays as is. They
+	 * target the open session when there is one (applied live), otherwise the next new
+	 * session's model; only the levels that model supports are offered — none (e.g. Haiku)
+	 * means no section at all.
+	 */
+	private addReasoningSection(menu: Menu): void {
+		const hasSession = !!this.state.sessionId;
+		const model = hasSession ? this.state.model : this.selectedModel;
+		const levels = supportedEffortLevels(model);
+		if (levels.length === 0) return;
+		const current = hasSession ? this.state.effort : clampEffort(model, this.selectedEffort);
+		menu.addSeparator();
+		menu.addItem((item) => item.setTitle(hasSession ? "Reasoning · this session" : "Reasoning").setIsLabel(true));
+		const choices: [EffortLevel | undefined, string][] = [
+			[undefined, EFFORT_DEFAULT_LABEL],
+			...levels.map((l): [EffortLevel, string] => [l, EFFORT_LABELS[l]]),
+		];
+		for (const [level, label] of choices) {
+			menu.addItem((item) =>
+				item
+					.setTitle(label)
+					.setChecked(level === current)
+					.onClick(() => {
+						if (hasSession && this.state.sessionId) this.client.setEffort(this.state.sessionId, level ?? null);
+						else this.selectedEffort = level;
+					})
+			);
+		}
 	}
 
 	private openModeMenu(evt: MouseEvent): void {

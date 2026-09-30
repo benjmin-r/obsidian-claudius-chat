@@ -1,7 +1,7 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type ClaudeChatPlugin from "./main";
-import { MODEL_OPTIONS, PERMISSION_MODE_OPTIONS } from "./settings-types";
-import type { PermissionMode } from "@occ/protocol";
+import { EFFORT_DEFAULT_LABEL, EFFORT_LABELS, MODEL_OPTIONS, PERMISSION_MODE_OPTIONS, type EffortSetting } from "./settings-types";
+import { EFFORT_LEVELS, type PermissionMode } from "@occ/protocol";
 
 /**
  * Settings tab. Every field is rendered on all platforms (no desktop-only
@@ -54,6 +54,20 @@ export class ClaudeChatSettingTab extends PluginSettingTab {
 				for (const [value, label] of Object.entries(MODEL_OPTIONS)) dropdown.addOption(value, label);
 				dropdown.setValue(this.plugin.settings.defaultModel).onChange(async (value) => {
 					this.plugin.settings.defaultModel = value;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName("Default reasoning level")
+			.setDesc(
+				"Reasoning effort for new sessions. A model that lacks a level uses the closest one it has (Haiku ignores it). Change it per-chat from the model menu."
+			)
+			.addDropdown((dropdown) => {
+				dropdown.addOption("default", EFFORT_DEFAULT_LABEL);
+				for (const level of EFFORT_LEVELS) dropdown.addOption(level, EFFORT_LABELS[level]);
+				dropdown.setValue(this.plugin.settings.defaultEffort).onChange(async (value) => {
+					this.plugin.settings.defaultEffort = value as EffortSetting;
 					await this.plugin.saveSettings();
 				});
 			});
