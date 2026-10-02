@@ -42,7 +42,7 @@ function main(): void {
 			archiveStored,
 			detectExternalActivity,
 		},
-		{ cwd: config.vaultCwd, defaultModel: config.defaultModel, bufferLimit: config.bufferLimit }
+		{ cwd: config.vaultCwd, defaultModel: config.defaultModel, bufferLimit: config.bufferLimit, maxLiveSessions: config.maxLiveSessions }
 	);
 
 	const transport = startTransport(config, manager);

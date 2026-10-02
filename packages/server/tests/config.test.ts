@@ -24,6 +24,12 @@ describe("loadConfig", () => {
 		expect(c).toMatchObject({ port: 9000, defaultModel: "claude-sonnet-4-6", vaultCwd: "/v" });
 	});
 
+	it("leaves the live-session cap to the manager default unless set", () => {
+		expect(loadConfig(base).maxLiveSessions).toBeUndefined();
+		expect(loadConfig({ ...base, OCC_MAX_LIVE_SESSIONS: "4" }).maxLiveSessions).toBe(4);
+		expect(() => loadConfig({ ...base, OCC_MAX_LIVE_SESSIONS: "0" })).toThrow(ConfigError);
+	});
+
 	it("rejects invalid ports", () => {
 		expect(() => loadConfig({ ...base, OCC_PORT: "0" })).toThrow(ConfigError);
 		expect(() => loadConfig({ ...base, OCC_PORT: "99999" })).toThrow(ConfigError);

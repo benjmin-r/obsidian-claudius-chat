@@ -18,6 +18,8 @@ export interface ServerConfig {
 	vaultCwd: string;
 	defaultModel: string;
 	bufferLimit: number;
+	/** Max live SDK subprocesses; undefined = the SessionManager default. */
+	maxLiveSessions?: number;
 }
 
 export const DEFAULT_PORT = 8765;
@@ -45,8 +47,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
 	const vaultCwd = (env.OCC_VAULT_CWD ?? DEFAULT_VAULT_CWD).trim();
 	const defaultModel = (env.OCC_MODEL ?? DEFAULT_MODEL).trim();
 	const bufferLimit = parsePort(env.OCC_BUFFER_LIMIT) ?? DEFAULT_BUFFER_LIMIT;
+	const maxLiveSessions = parsePort(env.OCC_MAX_LIVE_SESSIONS);
 
-	return { token, host, port, vaultCwd, defaultModel, bufferLimit };
+	return { token, host, port, vaultCwd, defaultModel, bufferLimit, maxLiveSessions };
 }
 
 function parsePort(raw: string | undefined): number | undefined {
