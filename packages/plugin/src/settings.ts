@@ -31,6 +31,7 @@ export class ClaudeChatSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.serverUrl = value.trim();
 						await this.plugin.saveSettings();
+						this.plugin.refreshConnections();
 					})
 			);
 
@@ -43,6 +44,7 @@ export class ClaudeChatSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						this.plugin.settings.token = value;
 						await this.plugin.saveSettings();
+						this.plugin.refreshConnections();
 					});
 				text.inputEl.type = "password";
 			});

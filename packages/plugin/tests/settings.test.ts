@@ -3,7 +3,12 @@ import { ClaudeChatSettingTab } from "../src/settings";
 import { DEFAULT_SETTINGS, effortFromSetting, type ClaudeChatSettings } from "../src/settings-types";
 
 function fakePlugin(settings: ClaudeChatSettings = { ...DEFAULT_SETTINGS }) {
-	return { app: new App(), settings, saveSettings: jest.fn().mockResolvedValue(undefined) };
+	return {
+		app: new App(),
+		settings,
+		saveSettings: jest.fn().mockResolvedValue(undefined),
+		refreshConnections: jest.fn(),
+	};
 }
 
 describe("DEFAULT_SETTINGS", () => {
@@ -51,5 +56,23 @@ describe("ClaudeChatSettingTab", () => {
 		await Promise.resolve();
 		expect(plugin.settings.serverUrl).toBe("ws://other:9000");
 		expect(plugin.saveSettings).toHaveBeenCalled();
+	});
+
+	it("re-points open views when the server URL or token changes", async () => {
+		const plugin = fakePlugin();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const tab = new ClaudeChatSettingTab(plugin.app, plugin as any);
+		tab.display();
+		const urlInput = tab.containerEl.querySelector("input") as HTMLInputElement;
+		urlInput.value = "ws://other:9000";
+		urlInput.dispatchEvent(new Event("input"));
+		await Promise.resolve();
+		expect(plugin.refreshConnections).toHaveBeenCalledTimes(1);
+		const tokenInput = tab.containerEl.querySelector('input[type="password"]') as HTMLInputElement;
+		tokenInput.value = "new-token";
+		tokenInput.dispatchEvent(new Event("input"));
+		await Promise.resolve();
+		expect(plugin.settings.token).toBe("new-token");
+		expect(plugin.refreshConnections).toHaveBeenCalledTimes(2);
 	});
 });

@@ -26,6 +26,24 @@ describe("ClaudeChatPlugin", () => {
 		expect(plugin.app.workspace.getLeaf).toHaveBeenCalledWith("tab");
 	});
 
+	it("debounces re-pointing open views after connection settings change", async () => {
+		jest.useFakeTimers();
+		try {
+			const plugin = new ClaudeChatPlugin();
+			await plugin.onload();
+			const getLeaves = plugin.app.workspace.getLeavesOfType as jest.Mock;
+			getLeaves.mockClear();
+			plugin.refreshConnections();
+			plugin.refreshConnections();
+			expect(getLeaves).not.toHaveBeenCalled();
+			jest.runAllTimers();
+			expect(getLeaves).toHaveBeenCalledTimes(1);
+			expect(getLeaves).toHaveBeenCalledWith(VIEW_TYPE_CLAUDE_CHAT);
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
 	it("reveals an existing leaf instead of creating one", async () => {
 		const plugin = new ClaudeChatPlugin();
 		await plugin.onload();

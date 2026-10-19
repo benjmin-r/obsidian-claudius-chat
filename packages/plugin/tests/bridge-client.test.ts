@@ -88,6 +88,45 @@ describe("BridgeClient", () => {
 		expect(h.sentFrames()).toContainEqual({ type: "hello", token: "secret", attach: "sess-9" });
 	});
 
+	it("setEndpoint is a no-op when nothing changed", () => {
+		const h = makeClient();
+		h.client.connect();
+		h.last().fireOpen();
+		expect(h.client.setEndpoint("ws://host:8765", "secret")).toBe("unchanged");
+		expect(FakeWs.instances).toHaveLength(1);
+	});
+
+	it("setEndpoint reconnects with a new token and keeps the attach target", () => {
+		const h = makeClient({ attach: "sess-9" });
+		h.client.connect();
+		h.last().fireOpen();
+		const old = h.last();
+		expect(h.client.setEndpoint("ws://host:8765", "fresh")).toBe("token");
+		expect(old.readyState).toBe(3);
+		expect(h.last()).not.toBe(old);
+		h.last().fireOpen();
+		expect(h.last().sent.map((f) => JSON.parse(f))).toContainEqual({ type: "hello", token: "fresh", attach: "sess-9" });
+	});
+
+	it("setEndpoint reconnects to a new URL without the old session", () => {
+		const h = makeClient({ attach: "sess-9" });
+		h.client.connect(); // stuck: never opens (e.g. the old URL was wrong)
+		expect(h.client.setEndpoint("ws://other:8767", "secret")).toBe("url");
+		expect(h.last().url).toBe("ws://other:8767");
+		h.last().fireOpen();
+		expect(h.last().sent.map((f) => JSON.parse(f))).toContainEqual({ type: "hello", token: "secret" });
+	});
+
+	it("setEndpoint recovers a view that gave up on a blank URL", () => {
+		const h = makeClient({ url: "" });
+		h.client.connect();
+		expect(FakeWs.instances).toHaveLength(0);
+		h.client.setEndpoint("ws://host:8767", "secret");
+		expect(FakeWs.instances).toHaveLength(1);
+		h.last().fireOpen();
+		expect(h.client.isConnected()).toBe(true);
+	});
+
 	it("dispatches parsed events and ignores garbage", () => {
 		const h = makeClient();
 		h.client.connect();

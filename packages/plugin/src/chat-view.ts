@@ -668,6 +668,26 @@ export class ChatView extends ItemView {
 	}
 
 	/**
+	 * Apply a changed server URL / token to this already-open view. Called by the
+	 * plugin when those settings change. A new URL is a different server, so the
+	 * session we were showing doesn't exist there: reset to the empty state.
+	 */
+	applyConnectionSettings(): void {
+		const { serverUrl, token } = this.plugin.settings;
+		const changed = this.client.setEndpoint(serverUrl, token);
+		if (changed === "unchanged") return;
+		this.dlog?.log("view", `connection settings changed (${changed})`);
+		if (changed === "url" && this.state.sessionId) {
+			this.pickerOpen = false;
+			this.pendingText = undefined;
+			this.currentTitle = undefined;
+			this.updateTabTitle();
+			this.state = { ...initialState(this.selectedModel), connection: this.state.connection };
+			this.render();
+		}
+	}
+
+	/**
 	 * Reconcile the connection-debug panel with the current setting, so toggling it
 	 * applies to already-open views without an app restart. Called by the plugin when
 	 * the setting changes.

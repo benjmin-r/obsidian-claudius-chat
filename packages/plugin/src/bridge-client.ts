@@ -324,6 +324,24 @@ export class BridgeClient {
 		this.heartbeatHandle = undefined;
 	}
 
+	/**
+	 * Point the client at a new server URL and/or token (settings changed while the
+	 * view is open) and reconnect at once, so a fixed setting takes effect without
+	 * reopening the view. A URL change also drops the attach target: that session
+	 * id belongs to the old server. Returns what changed.
+	 */
+	setEndpoint(url: string, token: string): "unchanged" | "token" | "url" {
+		const urlChanged = url !== this.opts.url;
+		if (!urlChanged && token === this.opts.token) return "unchanged";
+		this.dbg(`setEndpoint urlChanged=${urlChanged}`);
+		this.opts.url = url;
+		this.opts.token = token;
+		if (urlChanged) this.attachTarget = undefined;
+		this.attempts = 0;
+		this.forceReconnect(); // connect() cancels any pending backoff + heartbeat
+		return urlChanged ? "url" : "token";
+	}
+
 	/** Drop a (possibly dead-but-open) socket and reconnect from scratch. */
 	private forceReconnect(): void {
 		try {

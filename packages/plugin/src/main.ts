@@ -4,8 +4,12 @@ import { ConversationSuggest, insertConversationLink } from "./link-insert";
 import { ClaudeChatSettingTab } from "./settings";
 import { DEFAULT_SETTINGS, type ClaudeChatSettings } from "./settings-types";
 
+/** Quiet period after the last keystroke in the URL/token fields before reconnecting. */
+const CONNECTION_SETTINGS_DEBOUNCE_MS = 800;
+
 export default class ClaudeChatPlugin extends Plugin {
 	settings!: ClaudeChatSettings;
+	private refreshConnectionsTimer: number | undefined;
 
 	async onload(): Promise<void> {
 		await this.loadSettings();
@@ -73,6 +77,7 @@ export default class ClaudeChatPlugin extends Plugin {
 	}
 
 	onunload(): void {
+		window.clearTimeout(this.refreshConnectionsTimer);
 		// Obsidian detaches the leaves; the view's onClose disconnects the socket.
 	}
 
@@ -82,6 +87,20 @@ export default class ClaudeChatPlugin extends Plugin {
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+	}
+
+	/**
+	 * Re-point open chat views at the current server URL / token. Debounced: the
+	 * settings fields save on every keystroke, and each half-typed URL would
+	 * otherwise open (and fail) a socket.
+	 */
+	refreshConnections(): void {
+		window.clearTimeout(this.refreshConnectionsTimer);
+		this.refreshConnectionsTimer = window.setTimeout(() => {
+			for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_CLAUDE_CHAT)) {
+				if (leaf.view instanceof ChatView) leaf.view.applyConnectionSettings();
+			}
+		}, CONNECTION_SETTINGS_DEBOUNCE_MS);
 	}
 
 	/** Apply the connection-debug-panel setting to all open chat views (live toggle). */
