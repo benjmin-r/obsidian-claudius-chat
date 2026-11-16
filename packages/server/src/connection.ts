@@ -141,7 +141,7 @@ export class Connection {
 
 	private onHello(msg: Extract<ClientMessage, { type: "hello" }>): { close?: boolean } {
 		if (!safeEqual(msg.token ?? "", this.deps.token)) {
-			this.deps.send({ type: "error", message: "Invalid token." });
+			this.deps.send({ type: "error", code: "invalid_token", message: "Invalid token." });
 			return { close: true };
 		}
 		this.authed = true;

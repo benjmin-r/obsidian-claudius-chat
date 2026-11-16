@@ -39,7 +39,7 @@ describe("Connection auth", () => {
 		const { mkConn } = setup();
 		const { conn, sent } = mkConn();
 		expect(conn.handle({ type: "hello", token: "wrong" })).toEqual({ close: true });
-		expect(sent).toEqual([{ type: "error", message: "Invalid token." }]);
+		expect(sent).toEqual([{ type: "error", code: "invalid_token", message: "Invalid token." }]);
 	});
 
 	it("rejects messages before hello", () => {

@@ -335,4 +335,38 @@ describe("BridgeClient", () => {
 		expect(h.events.some((e) => e.type === "error")).toBe(true);
 		expect(h.scheduled).toHaveLength(0); // malformed URL won't fix itself by retrying
 	});
+
+	it("stops reconnecting after the server rejects the token and says how to fix it", () => {
+		const h = makeClient();
+		h.client.connect();
+		h.last().fireOpen();
+		h.last().deliver({ type: "error", code: "invalid_token", message: "Invalid token." });
+		h.last().close(); // the server closes the socket after rejecting
+		expect(h.events).toEqual([
+			{ type: "error", code: "invalid_token", message: "Invalid token — check the bearer token in the Claude Chat settings." },
+		]);
+		expect(h.states[h.states.length - 1]).toBe("disconnected");
+		// Heartbeat timers share the scheduler; only a reconnect (the 1000ms base delay) is a retry.
+		expect(h.scheduled.filter((t) => t.ms === 1000)).toHaveLength(0); // no retry loop with a bad token
+	});
+
+	it("retries again once the token is changed in settings", () => {
+		const h = makeClient();
+		h.client.connect();
+		h.last().deliver({ type: "error", code: "invalid_token", message: "Invalid token." });
+		h.last().close();
+		expect(h.client.setEndpoint("ws://host:8765", "new-secret")).toBe("token");
+		expect(FakeWs.instances).toHaveLength(2); // a fresh socket, with auth failure cleared
+		h.last().fireOpen();
+		h.last().close(); // an ordinary drop now reconnects again
+		expect(h.scheduled.filter((t) => t.ms === 1000)).toHaveLength(1);
+	});
+
+	it("still auto-reconnects after an ordinary (non-auth) error", () => {
+		const h = makeClient();
+		h.client.connect();
+		h.last().deliver({ type: "error", message: "something else" });
+		h.last().close();
+		expect(h.scheduled).toHaveLength(1);
+	});
 });

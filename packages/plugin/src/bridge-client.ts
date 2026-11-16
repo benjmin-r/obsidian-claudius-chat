@@ -51,6 +51,8 @@ const LIFECYCLE_FRAMES = new Set(["ready", "error", "attach_reset", "session_sta
 export class BridgeClient {
 	private ws: WsLike | undefined;
 	private intentionalClose = false;
+	/** Set when the server rejected our token; suppresses auto-reconnect until the next explicit connect(). */
+	private authFailed = false;
 	private reconnectHandle: unknown;
 	private heartbeatHandle: unknown;
 	private attempts = 0;
@@ -81,6 +83,7 @@ export class BridgeClient {
 		}
 		this.dbg(`connect() rs=${rs ?? "none"} attach=${this.attachTarget ?? "-"}`);
 		this.intentionalClose = false;
+		this.authFailed = false;
 		this.cancelReconnect();
 		this.stopHeartbeat();
 
@@ -280,6 +283,13 @@ export class BridgeClient {
 							: ` ${String(p.sessionId ?? "")}`;
 			this.dbg(`<- ${type}${detail}`.trimEnd());
 		}
+		if (type === "error" && (parsed as { code?: unknown }).code === "invalid_token") {
+			// Retrying with the same token can never succeed, so stop (see onClose) and tell
+			// the user what to fix instead of looping silently.
+			this.authFailed = true;
+			this.opts.onEvent({ type: "error", code: "invalid_token", message: "Invalid token — check the bearer token in the Claude Chat settings." });
+			return;
+		}
 		this.opts.onEvent(parsed as BridgeEvent);
 	}
 
@@ -293,7 +303,7 @@ export class BridgeClient {
 		this.stopHeartbeat();
 		this.dbg(`close (intentional=${this.intentionalClose} autoReconnect=${this.opts.autoReconnect})`);
 		this.opts.onStateChange("disconnected");
-		if (this.intentionalClose || !this.opts.autoReconnect) return;
+		if (this.intentionalClose || !this.opts.autoReconnect || this.authFailed) return;
 		this.scheduleReconnect();
 	}
 

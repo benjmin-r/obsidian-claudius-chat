@@ -164,6 +164,8 @@ export interface ErrorEvent {
 	type: "error";
 	sessionId?: string;
 	message: string;
+	/** Machine-readable cause, when the client must react to it (not just show the text). */
+	code?: "invalid_token";
 }
 
 /** The list of known sessions (reply to `list_sessions`). */
