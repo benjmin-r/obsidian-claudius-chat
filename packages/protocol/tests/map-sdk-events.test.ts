@@ -221,6 +221,19 @@ describe("estimateContextUsedPercent", () => {
 		expect(estimateContextUsedPercent([])).toBeUndefined();
 		expect(estimateContextUsedPercent([{ type: "assistant", message: { content: [] } }])).toBeUndefined();
 	});
+
+	it("skips an assistant turn whose usage carries no numeric token counts", () => {
+		const msgs: HistoryMessage[] = [
+			{ type: "assistant", message: { usage: { input_tokens: 1000, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } },
+			{ type: "assistant", message: { usage: { input_tokens: "n/a" } } },
+		];
+		expect(estimateContextUsedPercent(msgs)).toBeCloseTo((1000 / DEFAULT_CONTEXT_WINDOW_TOKENS) * 100);
+	});
+
+	it("counts only the usage fields that are present", () => {
+		const msgs: HistoryMessage[] = [{ type: "assistant", message: { usage: { cache_read_input_tokens: 500 } } }];
+		expect(estimateContextUsedPercent(msgs)).toBeCloseTo((500 / DEFAULT_CONTEXT_WINDOW_TOKENS) * 100);
+	});
 });
 
 describe("message anchors (live)", () => {
@@ -261,5 +274,8 @@ describe("extractTodos", () => {
 			{ content: "x", status: "pending" },
 			{ content: "y", status: "completed" },
 		]);
+	});
+	it("defaults missing content to an empty string and keeps in_progress", () => {
+		expect(extractTodos({ todos: [{ status: "in_progress" }] })).toEqual([{ content: "", status: "in_progress" }]);
 	});
 });

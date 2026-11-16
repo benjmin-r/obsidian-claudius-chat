@@ -19,8 +19,11 @@ jobs:
 
       - run: npm ci
 
+      - name: Lint (Obsidian's official review rules)
+        run: npm run lint
+
       - name: Test (all workspaces, enforces coverage thresholds)
-        run: npm test
+        run: npm run test:coverage
 
       - name: Build (protocol + server + plugin)
         run: npm run build

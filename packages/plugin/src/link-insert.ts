@@ -68,9 +68,10 @@ export function fetchSessions(url: string, token: string, timeoutMs = 6000): Pro
 		ws.onopen = () => ws.send(JSON.stringify({ type: "hello", token }));
 		ws.onerror = () => finish(() => reject(new Error("Couldn't reach the Claude server.")));
 		ws.onmessage = (ev) => {
-			let msg: { type?: string; sessions?: SessionSummary[]; message?: string };
+			type Frame = { type?: string; sessions?: SessionSummary[]; message?: string };
+			let msg: Frame;
 			try {
-				msg = JSON.parse(String((ev as MessageEvent).data));
+				msg = JSON.parse(String(ev.data)) as Frame;
 			} catch {
 				return;
 			}

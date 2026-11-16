@@ -184,7 +184,7 @@ export class ChatView extends ItemView {
 		(this.leaf as unknown as { updateHeader?: () => void }).updateHeader?.();
 		// updateHeader doesn't refresh the INLINE view-header title in this Obsidian
 		// version, so set that element directly (main-area leaves only; sidebars omit it).
-		(this.containerEl.querySelector(".view-header-title") as HTMLElement | null)?.setText(display);
+		this.containerEl.querySelector<HTMLElement>(".view-header-title")?.setText(display);
 	}
 
 	getIcon(): string {
@@ -271,7 +271,7 @@ export class ChatView extends ItemView {
 		const onShow = (e: Event): void => this.setKeyboardInset(Number((e as { keyboardHeight?: number }).keyboardHeight ?? 0));
 		const onHide = (): void => this.setKeyboardInset(0);
 		for (const ev of ["keyboardWillShow", "keyboardDidShow"]) {
-			this.registerDomEvent(window as Window, ev as keyof WindowEventMap, onShow as EventListener);
+			this.registerDomEvent(window, ev as keyof WindowEventMap, onShow);
 		}
 		for (const ev of ["keyboardWillHide", "keyboardDidHide"]) {
 			this.registerDomEvent(window as Window, ev as keyof WindowEventMap, onHide as EventListener);
@@ -439,17 +439,16 @@ export class ChatView extends ItemView {
 			// Pin the height hard. `height` alone is not honoured here: contentEl is a
 			// flex item, and on the iPad OSK it springs back to its content's min size
 			// (~510px measured), leaving the composer behind the keyboard. Setting
-			// min/max-height to the same value (and flex:none) defeats both the
-			// min-content floor and any flex-grow stretch so the box is exactly `avail`.
+			// min/max-height to the same value (and flex:none, via `.occ-kb-open`) defeats
+			// both the min-content floor and any flex-grow stretch so the box is exactly `avail`.
 			cc.style.height = `${avail}px`;
 			cc.style.minHeight = `${avail}px`;
 			cc.style.maxHeight = `${avail}px`;
-			cc.style.flex = "none";
 			// `flex:1` doesn't distribute space while the keyboard is up in this webview,
 			// so the composer won't pin to the bottom on its own. Lay the view out
 			// explicitly: composer absolute at the bottom, messages a definite scroll
 			// band between the toolbar and the composer (see the .occ-kb-open CSS).
-			const toolbar = cc.querySelector(".occ-toolbar") as HTMLElement | null;
+			const toolbar = cc.querySelector<HTMLElement>(".occ-toolbar");
 			cc.style.setProperty("--occ-msg-top", `${(toolbar?.offsetHeight ?? 48) + 8}px`);
 			// Composer sits `bottom: 8px` above the keyboard; leave another ~10px between
 			// it and the messages band so neither edge feels cramped.
@@ -459,7 +458,6 @@ export class ChatView extends ItemView {
 			cc.style.height = "";
 			cc.style.minHeight = "";
 			cc.style.maxHeight = "";
-			cc.style.flex = "";
 			cc.removeClass("occ-kb-open");
 			cc.style.removeProperty("--occ-msg-top");
 			cc.style.removeProperty("--occ-msg-bottom");
@@ -485,7 +483,7 @@ export class ChatView extends ItemView {
 		if (keyboardHeight > 0) {
 			const ccTop = cc.getBoundingClientRect().top;
 			const kbTop = window.innerHeight - keyboardHeight; // real keyboard top (px)
-			const toolbar = cc.querySelector(".occ-toolbar") as HTMLElement | null;
+			const toolbar = cc.querySelector<HTMLElement>(".occ-toolbar");
 			const toolbarH = toolbar?.offsetHeight ?? 48;
 			const compH = this.inputRowEl.offsetHeight;
 			const bandTop = toolbarH + 8;
@@ -525,25 +523,14 @@ export class ChatView extends ItemView {
 			this.kbSnapshot(`<<${name}>>`);
 		};
 		for (const ev of ["keyboardWillShow", "keyboardDidShow", "keyboardWillHide", "keyboardDidHide"]) {
-			this.registerDomEvent(window as Window, ev as keyof WindowEventMap, rec(ev) as EventListener);
+			this.registerDomEvent(window, ev as keyof WindowEventMap, rec(ev));
 		}
 
-		const btn = activeDocument.body.createEl("button", { text: "Copy KB" });
+		const btn = activeDocument.body.createEl("button", { text: "Copy KB", cls: "occ-kb-debug-btn" });
 		this.kbDebugEl = btn;
-		btn.style.position = "fixed";
 		// Top-right, offset down: clears the iPad status bar/clock (which hid the
 		// original top overlay) AND stays above the keyboard, so it's tappable while
-		// the keyboard is up.
-		btn.style.top = "56px";
-		btn.style.right = "6px";
-		btn.style.zIndex = "99999";
-		btn.style.font = "11px monospace";
-		btn.style.padding = "6px 10px";
-		btn.style.background = "#1a4";
-		btn.style.color = "#fff";
-		btn.style.border = "1px solid #fff";
-		btn.style.borderRadius = "6px";
-		btn.style.opacity = "0.85";
+		// the keyboard is up. Styled by `.occ-kb-debug-btn`.
 		btn.addEventListener("click", () => this.copyToClipboard(this.kbReport(), "KB measurements copied"));
 
 		// ~30 snapshots @500ms ≈ 15s of history — plenty for raise→hold→dismiss→copy.
@@ -592,11 +579,7 @@ export class ChatView extends ItemView {
 	private kbReport(): string {
 		const vv = window.visualViewport;
 		// Read env(safe-area-inset-*) via a probe (can't be read off the document directly).
-		const probe = activeDocument.body.createDiv();
-		probe.style.position = "fixed";
-		probe.style.bottom = "0";
-		probe.style.paddingBottom = "env(safe-area-inset-bottom, 0px)";
-		probe.style.paddingTop = "env(safe-area-inset-top, 0px)";
+		const probe = activeDocument.body.createDiv({ cls: "occ-safe-area-probe" });
 		const safeBottom = window.getComputedStyle(probe).paddingBottom;
 		const safeTop = window.getComputedStyle(probe).paddingTop;
 		probe.remove();
@@ -934,7 +917,7 @@ export class ChatView extends ItemView {
 	private tryResolveDeepLink(): void {
 		const id = this.pendingScrollTo;
 		if (!id) return;
-		const el = this.messagesInnerEl.querySelector(`[data-msg-id="${CSS.escape(id)}"]`) as HTMLElement | null;
+		const el = this.messagesInnerEl.querySelector<HTMLElement>(`[data-msg-id="${CSS.escape(id)}"]`);
 		if (el) {
 			this.pendingScrollTo = undefined;
 			this.deepLinkLoading = false;

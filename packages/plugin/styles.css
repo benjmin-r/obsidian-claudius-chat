@@ -32,6 +32,9 @@
    messages become a definite, scrollable band above it. */
 .occ-chat.occ-kb-open {
 	position: relative;
+	/* Defeats the flex-grow stretch / min-content floor; !important keeps the
+	   precedence the former inline style had over Obsidian's own view rules. */
+	flex: none !important;
 }
 .occ-chat.occ-kb-open .occ-messages-wrap {
 	position: absolute;
@@ -829,4 +832,40 @@
 .occ-link-suggest-meta {
 	font-size: 0.75em;
 	color: var(--text-muted);
+}
+
+/* Keyboard debug panel (settings: debugKeyboardPanel) */
+.occ-kb-debug-btn {
+	position: fixed;
+	top: 56px;
+	right: 6px;
+	z-index: 99999;
+	font: 11px monospace;
+	padding: 6px 10px;
+	background: #1a4;
+	color: #fff;
+	border: 1px solid #fff;
+	border-radius: 6px;
+	opacity: 0.85;
+}
+
+/* Zero-size probe used to read env(safe-area-inset-*) via computed style */
+.occ-safe-area-probe {
+	position: fixed;
+	bottom: 0;
+	padding-top: env(safe-area-inset-top, 0px);
+	padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Settings tab: group sections (see settings.ts) */
+.occ-settings-group-heading {
+	margin-top: var(--size-4-6);
+	padding-top: var(--size-4-4);
+	border-top: 1px solid var(--background-modifier-border);
+}
+.occ-settings-group-intro {
+	border-top: none;
+	padding-top: 0;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
 }

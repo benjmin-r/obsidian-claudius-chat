@@ -251,7 +251,7 @@ export class PluginSettingTab {
 }
 
 export class Setting {
-	private settingEl: HTMLElement;
+	settingEl: HTMLElement;
 	private nameEl: HTMLElement;
 	private descEl: HTMLElement;
 	private controlEl: HTMLElement;
@@ -274,6 +274,11 @@ export class Setting {
 
 	setDesc(desc: string): this {
 		this.descEl.textContent = desc;
+		return this;
+	}
+
+	setHeading(): this {
+		this.settingEl.classList.add("setting-item-heading");
 		return this;
 	}
 

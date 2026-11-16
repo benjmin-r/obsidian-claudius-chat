@@ -1,4 +1,12 @@
-import { App, PluginSettingTab, Setting, type SettingControl, type SettingDefinition, type SettingDefinitionItem } from "obsidian";
+import {
+	App,
+	PluginSettingTab,
+	Setting,
+	type SettingControl,
+	type SettingDefinition,
+	type SettingDefinitionGroup,
+	type SettingDefinitionItem,
+} from "obsidian";
 import type ClaudeChatPlugin from "./main";
 import { EFFORT_DEFAULT_LABEL, EFFORT_LABELS, MODEL_OPTIONS, PERMISSION_MODE_OPTIONS } from "./settings-types";
 import { EFFORT_LEVELS } from "@occ/protocol";
@@ -16,9 +24,25 @@ function asText(value: unknown): string {
 	return typeof value === "string" || typeof value === "number" ? String(value) : "";
 }
 
-/** A definition with a control or a render callback (the only kinds this tab uses). */
+/** A definition with a control or a render callback (the only row kinds this tab uses). */
 function isRow(def: SettingDefinitionItem): def is SettingDefinition {
 	return "control" in def || "render" in def;
+}
+
+/**
+ * A group: a heading, one sentence saying what the group is for, then its rows.
+ * The sentence is a text-only row (the group definition has no description field),
+ * kept out of settings search.
+ */
+function group(heading: string, intro: string, items: SettingDefinition[]): SettingDefinitionGroup {
+	const introRow: SettingDefinition = {
+		name: intro,
+		searchable: false,
+		render: (setting) => {
+			setting.settingEl.addClass("occ-settings-group-intro");
+		},
+	};
+	return { type: "group", heading, items: [introRow, ...items] };
 }
 
 /**
@@ -37,83 +61,92 @@ export class ClaudeChatSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
-	// No top heading: Obsidian already renders the plugin name as the tab
-	// title, and a single-section tab needs no extra heading.
+	// No top-level heading: Obsidian renders the plugin name as the tab title. The
+	// group headings below are for the four sections.
 	getSettingDefinitions(): SettingDefinitionItem[] {
 		return [
-			{
-				name: "Server URL",
-				desc: "ws:// address of the Claude SDK server on your tailnet, including port.",
-				control: { type: "text", key: "serverUrl", placeholder: "ws://host.tailnet.ts.net:8765" },
-			},
-			{
-				name: "Bearer token",
-				desc: "Must match OCC_TOKEN on the server.",
-				// Rendered by hand: the declarative text control cannot mask its input.
-				render: (setting) => {
-					setting.addText((text) => {
-						text.setPlaceholder("token")
-							.setValue(this.plugin.settings.token)
-							.onChange((value) => void this.setControlValue("token", value));
-						text.inputEl.type = "password";
-					});
+			group("Connection", "Where the plugin finds your Claude Chat server and how it reconnects.", [
+				{
+					name: "Server URL",
+					desc: "ws:// address of the Claude SDK server on your tailnet, including port.",
+					control: { type: "text", key: "serverUrl", placeholder: "ws://host.tailnet.ts.net:8765" },
 				},
-			},
-			{
-				name: "Default model",
-				desc: "Model used when starting a new session.",
-				control: { type: "dropdown", key: "defaultModel", options: MODEL_OPTIONS },
-			},
-			{
-				name: "Default reasoning level",
-				desc: "Reasoning effort for new sessions. A model that lacks a level uses the closest one it has (Haiku ignores it). Change it per-chat from the model menu.",
-				control: {
-					type: "dropdown",
-					key: "defaultEffort",
-					options: EFFORT_OPTIONS,
+				{
+					name: "Bearer token",
+					desc: "Must match OCC_TOKEN on the server.",
+					// Rendered by hand: the declarative text control cannot mask its input.
+					render: (setting) => {
+						setting.addText((text) => {
+							text.setPlaceholder("token")
+								.setValue(this.plugin.settings.token)
+								.onChange((value) => void this.setControlValue("token", value));
+							text.inputEl.type = "password";
+						});
+					},
 				},
-			},
-			{
-				name: "Default mode",
-				desc: "Permission mode applied to new sessions. Change it per-chat from the toolbar mode picker.",
-				control: { type: "dropdown", key: "defaultPermissionMode", options: PERMISSION_MODE_OPTIONS },
-			},
-			{
-				name: "Auto-reconnect",
-				desc: "Reconnect automatically when the connection drops.",
-				control: { type: "toggle", key: "autoReconnect" },
-			},
-			{
-				name: "Reconnect delay (ms)",
-				desc: "Base backoff between reconnect attempts.",
-				control: {
-					type: "number",
-					key: "reconnectDelayMs",
-					placeholder: "1500",
-					min: MIN_RECONNECT_DELAY_MS,
-					validate: (value) => (value >= MIN_RECONNECT_DELAY_MS ? undefined : `Enter at least ${MIN_RECONNECT_DELAY_MS}.`),
+				{
+					name: "Auto-reconnect",
+					desc: "Reconnect automatically when the connection drops.",
+					control: { type: "toggle", key: "autoReconnect" },
 				},
-			},
-			{
-				name: "Keyboard debug panel",
-				desc: "Show a 'Copy KB' button that copies an on-screen-keyboard layout report to the clipboard. For diagnosing mobile keyboard/layout issues. Reopen the chat view after changing.",
-				control: { type: "toggle", key: "debugKeyboardPanel" },
-			},
-			{
-				name: "Export folder",
-				desc: "Vault folder conversation exports are written to.",
-				control: { type: "text", key: "exportFolder", placeholder: "Claude Conversations" },
-			},
-			{
-				name: "Group exports by month",
-				desc: "File exports into YYYY-MM subfolders under the export folder.",
-				control: { type: "toggle", key: "exportGroupByMonth" },
-			},
-			{
-				name: "Connection debug panel",
-				desc: "Show a small on-screen widget that records connection events (foreground/reconnect/attach/server errors). Copy sends the log to the clipboard; Mark inserts a section marker. For diagnosing connection issues like 'No such session' on foregrounding.",
-				control: { type: "toggle", key: "debugConnectionPanel" },
-			},
+				{
+					name: "Reconnect delay (ms)",
+					desc: "Base backoff between reconnect attempts.",
+					control: {
+						type: "number",
+						key: "reconnectDelayMs",
+						placeholder: "1500",
+						min: MIN_RECONNECT_DELAY_MS,
+						validate: (value) =>
+							value >= MIN_RECONNECT_DELAY_MS ? undefined : `Enter at least ${MIN_RECONNECT_DELAY_MS}.`,
+					},
+				},
+			]),
+			group("New sessions", "Defaults for every new chat; each chat can change them from its toolbar.", [
+				{
+					name: "Default model",
+					desc: "Model used when starting a new session.",
+					control: { type: "dropdown", key: "defaultModel", options: MODEL_OPTIONS },
+				},
+				{
+					name: "Default reasoning level",
+					desc: "Reasoning effort for new sessions. A model that lacks a level uses the closest one it has (Haiku ignores it). Change it per-chat from the model menu.",
+					control: {
+						type: "dropdown",
+						key: "defaultEffort",
+						options: EFFORT_OPTIONS,
+					},
+				},
+				{
+					name: "Default mode",
+					desc: "Permission mode applied to new sessions. Change it per-chat from the toolbar mode picker.",
+					control: { type: "dropdown", key: "defaultPermissionMode", options: PERMISSION_MODE_OPTIONS },
+				},
+			]),
+			group("Exports", "Where conversation exports are saved in your vault.", [
+				{
+					name: "Export folder",
+					desc: "Vault folder conversation exports are written to.",
+					control: { type: "text", key: "exportFolder", placeholder: "Claude Conversations" },
+				},
+				{
+					name: "Group exports by month",
+					desc: "File exports into YYYY-MM subfolders under the export folder.",
+					control: { type: "toggle", key: "exportGroupByMonth" },
+				},
+			]),
+			group("Troubleshooting", "Diagnostic panels for tracking down mobile keyboard and connection problems.", [
+				{
+					name: "Keyboard debug panel",
+					desc: "Show a 'Copy KB' button that copies an on-screen-keyboard layout report to the clipboard. For diagnosing mobile keyboard/layout issues. Reopen the chat view after changing.",
+					control: { type: "toggle", key: "debugKeyboardPanel" },
+				},
+				{
+					name: "Connection debug panel",
+					desc: "Show a small on-screen widget that records connection events (foreground/reconnect/attach/server errors). Copy sends the log to the clipboard; Mark inserts a section marker. For diagnosing connection issues like 'No such session' on foregrounding.",
+					control: { type: "toggle", key: "debugConnectionPanel" },
+				},
+			]),
 		];
 	}
 
@@ -134,12 +167,22 @@ export class ClaudeChatSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 		for (const def of this.getSettingDefinitions()) {
-			if (!isRow(def)) continue;
-			const setting = new Setting(containerEl).setName(def.name);
-			if (typeof def.desc === "string") setting.setDesc(def.desc);
-			if (def.control) this.renderControl(setting, def.control);
-			else if (def.render) (def.render as (setting: Setting) => void)(setting);
+			if (isRow(def)) this.renderRow(containerEl, def);
+			else if ("heading" in def) this.renderGroup(containerEl, def);
 		}
+	}
+
+	private renderGroup(containerEl: HTMLElement, def: SettingDefinitionGroup): void {
+		const heading = new Setting(containerEl).setName(def.heading ?? "").setHeading();
+		heading.settingEl.addClass("occ-settings-group-heading");
+		for (const item of def.items ?? []) if (isRow(item)) this.renderRow(containerEl, item);
+	}
+
+	private renderRow(containerEl: HTMLElement, def: SettingDefinition): void {
+		const setting = new Setting(containerEl).setName(def.name);
+		if (typeof def.desc === "string") setting.setDesc(def.desc);
+		if (def.control) this.renderControl(setting, def.control);
+		else if (def.render) (def.render as (setting: Setting) => void)(setting);
 	}
 
 	private renderControl(setting: Setting, control: SettingControl): void {
@@ -156,12 +199,15 @@ export class ClaudeChatSettingTab extends PluginSettingTab {
 				break;
 			case "dropdown":
 				setting.addDropdown((dropdown) => {
-					for (const [optionValue, label] of Object.entries(control.options)) dropdown.addOption(optionValue, label);
+					for (const [optionValue, label] of Object.entries(control.options))
+						dropdown.addOption(optionValue, label);
 					dropdown.setValue(asText(value)).onChange((v) => void this.setControlValue(key, v));
 				});
 				break;
 			case "toggle":
-				setting.addToggle((toggle) => toggle.setValue(Boolean(value)).onChange((v) => void this.setControlValue(key, v)));
+				setting.addToggle((toggle) =>
+					toggle.setValue(Boolean(value)).onChange((v) => void this.setControlValue(key, v))
+				);
 				break;
 			case "number":
 				setting.addText((text) =>
