@@ -83,6 +83,16 @@ Automated checks, all run against a clean clone where noted:
 - ✅ `npm run lint` (eslint-plugin-obsidianmd, the directory review's rules) is in the
   repo and in CI: 0 findings. `minAppVersion` 1.4.0 verified with it (lowest clean
   version; the true floor is 1.3.5, TDL-20261117-003).
+- ✅ `.github/dependabot.yml` (weekly npm and Actions updates) and `SECURITY.md` added.
+  Maintainer step in the GitHub settings: enable **Private vulnerability reporting**
+  (SECURITY.md points reporters at it) and **Dependabot alerts**.
+- ✅ Release workflow dry-run from a clean copy with the new root `manifest.json`: build
+  OK, tag check passes for 0.1.0 and rejects a mismatch, all three assets exist.
+- ⚠️ GitHub repo looks **private**: the unauthenticated API returns 404 while SSH works.
+  BRAT (without a token) and the store both need a public repo. `origin` has only `main`
+  (at `d47101e`), no tags. `gh` is not installed on this host, so visibility and
+  Actions workflow permissions ("Read and write", per the official release guide)
+  could not be checked.
 - ✅ Version consistency: root, all packages, `manifest.json` and `versions.json`
   are all `0.1.0`; the release workflow also enforces tag == manifest version.
 - ✅ `main.js` bundle: only `require("obsidian")`; no Node built-ins, `eval`,
@@ -121,15 +131,16 @@ be done from a headless CI checkout:
 
 - `[MUST]` ⏳ End-to-end smoke test from a clean vault and clean server, following the
   README verbatim. The install steps are the product surface for a self-hosted plugin.
-- `[MUST]` ⏳ First-run / failure UX: server down, wrong token, Tailscale off, blank URL
-  should each produce a clear message, not a dead sidebar. (Blank/malformed URL is now
-  guarded in code — `BridgeClient.connect()` emits a clear error instead of throwing,
-  with tests; the rest still needs a manual pass on a real device.)
+- `[MUST]` ◐ First-run / failure UX. Code-verified 2026-11-16: blank URL and malformed
+  URL give a clear message and no retry (tests); a rejected token now stops the retry
+  loop and says to check the token (`code: "invalid_token"`, tests; needs the server
+  restarted to take effect). Server down / Tailscale off just show the red
+  disconnected icon and keep retrying with backoff, with no message. Still needs a manual
+  pass on a real device.
 - `[MUST]` ⏳ Real mobile test (iOS + Android) over the tailnet, since the plugin ships
   `isDesktopOnly: false`. (iPad on-screen keyboard and Android keyboard are still
   unverified with the final keyboard fix — see the handoff notes.)
-- `[HIGH]` ⏳ Screenshot or GIF in the README (streaming sidebar + a permission prompt).
-  Highest-leverage adoption item. (Needs a running instance to capture.)
+- `[HIGH]` ✅ Demo GIF in the README (`docs/claudius-chat-demo.gif`, 2.9 MB, 800x675). A GIF is used because GitHub does not render a repo-relative `<video>` tag (checked 2026-11-17).
 - `[HIGH]` ✅ Replace `<owner>/obsidian-claudius-chat` placeholders with the real GitHub
   path (`benjmin-r/obsidian-claudius-chat`) so the BRAT instructions are copy-pasteable.
 - `[HIGH]` ⏳ Cut the tag (`git tag 0.1.0 && git push origin 0.1.0`) and confirm the
