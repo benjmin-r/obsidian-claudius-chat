@@ -164,7 +164,7 @@ Decided from real device reports; see `setKeyboardInset` / `setKeyboardInsetTabl
 ```bash
 cd ~/projects/obsidian-claude-chat
 npm run build -w @occ/plugin
-cp packages/plugin/main.js packages/plugin/styles.css packages/plugin/manifest.json \
+cp packages/plugin/main.js packages/plugin/styles.css manifest.json \
    ~/vaults/benjamin/.obsidian/plugins/claude-chat/          # never copy data.json
 XDG_RUNTIME_DIR=/run/user/$(id -u) systemctl --user restart obsidian-sync.service
 ```

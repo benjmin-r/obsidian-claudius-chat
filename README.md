@@ -111,7 +111,7 @@ Copy the three build artifacts into your vault's plugin folder:
 ```
 <vault>/.obsidian/plugins/claude-chat/
   main.js        (packages/plugin/main.js)
-  manifest.json  (packages/plugin/manifest.json)
+  manifest.json  (manifest.json, repo root)
   styles.css     (packages/plugin/styles.css)
 ```
 
@@ -122,7 +122,7 @@ Enable **Claude Chat** in *Settings → Community plugins*, then open
 - **Default model** — defaults to Sonnet 5.5
 
 These fields are shown on **all platforms** (including mobile). Open the chat
-from the ribbon (message icon) or the *Open Claude chat* command.
+from the ribbon (message icon) or the *Open chat* command.
 
 ## Usage, resume & limitations
 
@@ -226,7 +226,7 @@ with `main.js`, `manifest.json`, `styles.css` attached — the format BRAT and t
 Obsidian community store expect. To cut a release:
 
 ```bash
-# 1. bump "version" in packages/plugin/manifest.json (+ add the entry to versions.json)
+# 1. bump "version" in manifest.json (repo root) and add the entry to versions.json
 # 2. tag it (the tag MUST equal the manifest version) and push:
 git tag 0.1.0
 git push origin 0.1.0

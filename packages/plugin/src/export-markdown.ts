@@ -113,5 +113,5 @@ function renderItem(item: DisplayItem): string {
  */
 export function renderMarkdown(items: DisplayItem[], meta: ExportMeta): string {
 	const body = items.map((item) => renderItem(item)).join("\n\n---\n\n");
-	return [frontmatter(meta), body].join("\n\n").trimEnd() + "\n";
+	return [frontmatter(meta), body].join("\n\n").replace(/\s+$/, "") + "\n";
 }

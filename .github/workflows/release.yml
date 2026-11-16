@@ -4,7 +4,7 @@ name: Release plugin
 # (main.js, manifest.json, styles.css) whenever you push a version tag.
 #
 # Usage:
-#   1. Bump "version" in packages/plugin/manifest.json (e.g. 0.2.0)
+#   1. Bump "version" in manifest.json (e.g. 0.2.0) and add it to versions.json
 #   2. git tag 0.2.0 && git push origin 0.2.0
 # The tag MUST equal the manifest version (Obsidian/BRAT match release tag to it).
 
@@ -37,7 +37,7 @@ jobs:
 
       - name: Verify tag matches manifest version
         run: |
-          v=$(node -p "require('./packages/plugin/manifest.json').version")
+          v=$(node -p "require('./manifest.json').version")
           if [ "$v" != "$GITHUB_REF_NAME" ]; then
             echo "::error::Tag '$GITHUB_REF_NAME' does not match manifest version '$v'"
             exit 1
@@ -51,5 +51,5 @@ jobs:
             --title "$GITHUB_REF_NAME" \
             --generate-notes \
             packages/plugin/main.js \
-            packages/plugin/manifest.json \
+            manifest.json \
             packages/plugin/styles.css

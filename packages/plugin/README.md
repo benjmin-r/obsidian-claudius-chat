@@ -32,7 +32,7 @@ Enable **Claude Chat** under *Settings → Community plugins*.
 
 ## Using it
 
-- Open from the ribbon (message icon) or the **Open Claude chat** command.
+- Open from the ribbon (message icon) or the **Open chat** command.
 - Type and press **Enter** to send (**Shift+Enter** for a newline).
 - **New** starts a fresh session; **list** requests the server's session list;
   the stop icon interrupts the current turn.

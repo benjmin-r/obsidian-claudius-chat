@@ -4,6 +4,33 @@ This file tracks significant technical decisions made during development, using 
 simplified ADR format. Entries are in reverse chronological order (newest first).
 Each entry is ≤200 words (longer when a hard-won investigation is worth preserving).
 
+## TDL-20261117-003: Obsidian's official linter in the repo and CI; minAppVersion verified
+
+**Date:** 2026-11-17
+**Status:** Implemented
+
+**Context:** the community directory's automated review runs the same checks as
+`eslint-plugin-obsidianmd`; the FAQ recommends running it locally. We had only
+run it in a scratch directory.
+
+**Decision:** new devDependencies at the repo root: `eslint` ^9,
+`eslint-plugin-obsidianmd` ^0.6 (recommended config) and `typescript-eslint` ^8.
+`npm run lint` lints `packages/plugin/src` only (server and protocol are plain
+Node) and runs in CI before the tests. It needs Node 20.19+; CI uses Node 20.x.
+Run it from the repo root: its `no-unsupported-api` rule reads `manifest.json`
+there.
+
+**Verified:** that rule compares each used API against a per-version declaration
+history, not the bare `@since` tag. At `minAppVersion` 0.9.0 it reports 279
+findings, from 1.0.0 to 1.3.0 one (`MarkdownRenderer.render`, since 1.3.5), and
+from 1.4.0 none, so 1.4.0 stays. `workspace.revealLeaf` is tagged `@since 1.7.2`
+but only became async then (it existed before as `(leaf) => void`); we `await`
+it, so it is safe on 1.4.0. Do not trust `@since` alone.
+
+**Files:** `eslint.config.mjs`, `package.json`, `package-lock.json`, `.github/workflows/ci.yml`.
+
+---
+
 ---
 
 ## TDL-20261117-001: Settings tab defined once, rendered natively on 1.13+ and by `display()` before
@@ -31,6 +58,34 @@ Rejected: two hand-written copies (drift) and bumping `minAppVersion`.
 unit tests, not in a real Obsidian 1.13. Check the settings tab there.
 
 **Files:** `plugin/src/settings.ts`, `plugin/tests/settings.test.ts`.
+
+---
+
+## TDL-20261116-001: Plugin `manifest.json` + `versions.json` live at the repo root
+
+**Date:** 2026-11-16
+**Status:** Implemented
+
+**Context:** the community directory's "Submit your plugin" page says
+`manifest.json` "must sit in the root and be committed to the default branch";
+it reads the HEAD manifest. It documents no monorepo exception. Ours was at
+`packages/plugin/`.
+
+**Decision:** moved `manifest.json` and `versions.json` to the repo root
+(`git mv`, history kept). `main.js` and `styles.css` stay in `packages/plugin/`
+and the release workflow attaches them from there. Rejected: a root copy kept in
+sync (two sources of truth for the version) and moving the whole plugin out of
+the workspace (churns every package path for no gain).
+
+**Also in this change:** removed the default `Mod+O` hotkey (collides with
+Obsidian's Quick switcher; guideline: no default hotkeys), turned the static
+`style.flex` into `.occ-kb-open { flex: none !important }`, and dropped the
+plugin name from command names. Command ids are unchanged.
+
+**Open:** unverified whether the directory's build verification expects
+`main.js` at the root; check with "Review branch" before submitting.
+
+**Files:** `manifest.json`, `versions.json`, `.github/workflows/release.yml`, `README.md`, `plugin/src/main.ts`, `plugin/styles.css`.
 
 ---
 

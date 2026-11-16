@@ -273,15 +273,16 @@ export class BridgeClient {
 		// Log connection-relevant frames only (skip high-frequency render/delta traffic).
 		if (this.opts.onDebug && LIFECYCLE_FRAMES.has(type)) {
 			const p = parsed as Record<string, unknown>;
+			const str = (v: unknown): string => (typeof v === "string" ? v : "");
 			const detail =
 				type === "error"
-					? `: ${String(p.message ?? "")}`
+					? `: ${str(p.message)}`
 					: type === "session_status"
-						? ` ${String(p.sessionId ?? "")} status=${String(p.status ?? "")}`
+						? ` ${str(p.sessionId)} status=${str(p.status)}`
 						: type === "sessions_list"
 							? ` (${Array.isArray(p.sessions) ? p.sessions.length : "?"})`
-							: ` ${String(p.sessionId ?? "")}`;
-			this.dbg(`<- ${type}${detail}`.trimEnd());
+							: ` ${str(p.sessionId)}`;
+			this.dbg(`<- ${type}${detail}`.replace(/\s+$/, ""));
 		}
 		if (type === "error" && (parsed as { code?: unknown }).code === "invalid_token") {
 			// Retrying with the same token can never succeed, so stop (see onClose) and tell

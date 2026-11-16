@@ -22,13 +22,13 @@ export default class ClaudeChatPlugin extends Plugin {
 
 		this.addCommand({
 			id: "open-claude-chat",
-			name: "Open Claude chat",
+			name: "Open chat",
 			callback: () => void this.activateView(),
 		});
 
 		this.addCommand({
 			id: "open-claude-chat-tab",
-			name: "Open Claude chat in tab",
+			name: "Open chat in tab",
 			callback: () => void this.openInTab(),
 		});
 
@@ -37,7 +37,6 @@ export default class ClaudeChatPlugin extends Plugin {
 		this.addCommand({
 			id: "toggle-transcript-detail",
 			name: "Toggle tool call / thinking detail (expand or collapse all)",
-			hotkeys: [{ modifiers: ["Mod"], key: "o" }],
 			checkCallback: (checking) => {
 				const view = this.app.workspace.getActiveViewOfType(ChatView);
 				if (!view) return false;
@@ -82,7 +81,7 @@ export default class ClaudeChatPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, (await this.loadData()) as Partial<ClaudeChatSettings> | null);
 	}
 
 	async saveSettings(): Promise<void> {
