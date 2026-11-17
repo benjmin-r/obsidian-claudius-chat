@@ -209,7 +209,7 @@ be done from a headless CI checkout:
 - `[MUST]` ⏳ Real mobile test (iOS + Android) over the tailnet, since the plugin ships
   `isDesktopOnly: false`. (iPad on-screen keyboard and Android keyboard are still
   unverified with the final keyboard fix — see the handoff notes.)
-- `[HIGH]` ✅ Demo GIF in the README (`docs/claudius-chat-demo.gif`, 2.9 MB, 800x675). A GIF is used because GitHub does not render a repo-relative `<video>` tag (checked 2026-11-17).
+- `[HIGH]` ✅ Demo GIF in the README (`docs/images/claudius-chat-demo.gif`, 2.9 MB, 800x675). A GIF is used because GitHub does not render a repo-relative `<video>` tag (checked 2026-11-17).
 - `[HIGH]` ✅ Replace `<owner>/obsidian-claudius-chat` placeholders with the real GitHub
   path (`benjmin-r/obsidian-claudius-chat`) so the BRAT instructions are copy-pasteable.
 - `[HIGH]` ⏳ Cut the tag (`git tag 0.1.0 && git push origin 0.1.0`) and confirm the

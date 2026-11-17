@@ -2,7 +2,7 @@
 
 Claudius Chat is a sidebar for Obsidian that lets you chat with Claude on desktop and phone. Claudius runs the agent on a server you host, so your sessions keep going when your device sleeps.
 
-![Claudius Chat in Obsidian: a chat session with the model picker, connection status and message box](docs/claudius-chat-demo.gif)
+![Claudius Chat in Obsidian: a chat session with the model picker, connection status and message box](docs/images/claudius-chat-demo.gif)
 
 Claudius Chat puts the [Claude Code](https://code.claude.com/docs/en/overview) agent, which can read, search and edit the notes in your vault, behind a chat UI instead of a terminal. Replies and thinking stream in, tool calls and the agent's todo list are shown, and anything destructive waits for your **Allow** or **Deny**.
 
@@ -76,6 +76,12 @@ That is enough to try it. To keep it running across reboots, set it up as a serv
 - **Sessions:** switch, rename, archive or delete them from the session list. Sessions keep running when the app closes.
 - **Share a conversation:** **Export to Markdown** saves a session as a note, and **Insert link to a Claude conversation** puts a link to a chat (or a single message) in the note you are editing.
 - **Stop** interrupts the current turn. **Reload** re-reads a session from disk.
+
+### Screenshots
+
+| Desktop | Mobile |
+| :-----: | :----: |
+| ![Claudius Chat on desktop: a conversation next to the file explorer, with note suggestions after typing @ in the message box](docs/images/claudius-screenshot-desktop-1.png) | ![Claudius Chat on mobile: a conversation with the tool calls expanded and the message box at the bottom](docs/images/claudius-screenshot-mobile-1.png) |
 
 ## What the agent can do to your notes
 
