@@ -4,7 +4,7 @@ Maintainer notes. A release is a GitHub Release whose tag equals the plugin vers
 
 ## Cut a release
 
-1. Bump `version` in `manifest.json` (repo root) and add the matching entry to `versions.json` (`"<version>": "<minAppVersion>"`). Keep the package versions in step.
+1. Bump `version` in `manifest.json` (repo root) and add the matching entry to `versions.json` (`"<version>": "<minAppVersion>"`). Keep the package versions in step: the root and the three packages, plus the exact `@occ/protocol` pins in `packages/plugin` and `packages/server` and their entries in `package-lock.json`. `npm version --workspaces` does not update the pins and fails on them; edit the versions by hand and check with `npm ci` and `npm ls @occ/protocol`.
 2. Update `TECHNICAL_DECISIONS.md` if the release carries a notable decision.
 3. Run `npm run lint`, `npm run build` and `npm run test:coverage`, then the review-parity lint described in [`LAUNCH_CHECKLIST.md`](LAUNCH_CHECKLIST.md) (the directory review runs an older linter than the repo's).
 4. Merge to `main`. The directory reads `manifest.json` at the head of the default branch.
