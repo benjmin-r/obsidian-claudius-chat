@@ -60,11 +60,12 @@ export const DEFAULT_SETTINGS: ClaudiusChatSettings = {
 
 /** Models offered in the new-session dropdown. */
 export const MODEL_OPTIONS: Record<string, string> = {
+	"claude-fable-5-1": "Fable 5.1",
 	"claude-opus-5-5": "Opus 5.5",
 	"claude-sonnet-5-5": "Sonnet 5.5",
+	"claude-haiku-5-5": "Haiku 5.5",
 	"claude-opus-5": "Opus 5",
 	"claude-sonnet-5": "Sonnet 5",
-	"claude-haiku-4-5-20251001": "Haiku 4.5",
 };
 
 /** Display names for reasoning levels (sentence case). */

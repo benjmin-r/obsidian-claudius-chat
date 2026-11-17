@@ -11,6 +11,25 @@ Each entry is ≤200 words (longer when a hard-won investigation is worth preser
 
 ---
 
+## TDL-20261117-005: Add Fable 5.1 and Haiku 5.5 to the picker; effort table gains both
+
+**Date:** 2026-11-17
+**Status:** Implemented
+
+**Context:** Fable 5.1 (`claude-fable-5-1`) and Haiku 5.5 (`claude-haiku-5-5`) are
+out. The picker had Opus/Sonnet 5.5 and 5, plus Haiku 4.5.
+
+**Decision:** `MODEL_OPTIONS` lists Fable 5.1, Opus 5.5, Sonnet 5.5, Haiku 5.5,
+then Opus 5 and Sonnet 5; Haiku 4.5 is dropped (superseded). Defaults stay on
+Sonnet 5.5. `supportedEffortLevels` previously treated every Haiku as having no
+effort control and every unknown family (Fable) the same; per the Claude API
+model docs, Fable 5.1 and Haiku 5.5 accept all five levels (`xhigh` included),
+while Haiku 4.5 still has none, so the table now keys on `fable` and `haiku-5`.
+
+**Caveat:** the levels for the two new models come from the API docs, not from a
+live `supportedModels()` / Stop-hook check as in TDL-20260930-001. The same docs
+list `xhigh` for Sonnet 5.5, which our table (verified live) excludes; left as is.
+
 ## TDL-20261117-004: Match the directory review: lint every package from a clean checkout, minAppVersion 1.7.2
 
 **Date:** 2026-11-17
