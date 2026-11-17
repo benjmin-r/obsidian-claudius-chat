@@ -16,6 +16,7 @@ import {
 } from "@occ/protocol";
 import { SessionActor, type SessionActorDeps } from "./session-actor";
 import type { ArchiveStored, DeleteStored, DetectExternalActivity, ListStored, LoadHistory, RenameStored } from "./ports";
+import { logInfo, logWarn } from "./log";
 
 export interface SessionManagerConfig {
 	cwd: string;
@@ -121,7 +122,7 @@ export class SessionManager {
 		for (const actor of [...this.actors]) {
 			if (actor.status !== "working") continue;
 			if (now - actor.updatedAt <= stallMs) continue;
-			console.warn(
+			logWarn(
 				`[occ] stalled turn (no activity for ${Math.round((now - actor.updatedAt) / 1000)}s) — recovering session=${actor.id}`
 			);
 			const message = "This response stalled with no activity and was cancelled. Send a new message to retry.";
@@ -286,7 +287,7 @@ export class SessionManager {
 	async attachOrResume(sessionId: string): Promise<SessionActor | undefined> {
 		const existing = this.index.get(sessionId);
 		if (existing) return existing;
-		let stored: Awaited<ReturnType<ListStored>> = [];
+		let stored: Awaited<ReturnType<ListStored>>;
 		try {
 			stored = await this.deps.listStored(this.config.cwd);
 		} catch {
@@ -331,7 +332,7 @@ export class SessionManager {
 
 	/** Active in-memory sessions merged with persisted ones from the store, newest first. */
 	async listSummaries(): Promise<SessionSummary[]> {
-		let stored: { sessionId: string; title: string; updatedAt: number; createdAt?: number; archived: boolean }[] = [];
+		let stored: { sessionId: string; title: string; updatedAt: number; createdAt?: number; archived: boolean }[];
 		try {
 			stored = await this.deps.listStored(this.config.cwd);
 		} catch {
@@ -394,10 +395,10 @@ export class SessionManager {
 			if (!victim || actor.updatedAt < victim.updatedAt) victim = actor;
 		}
 		if (victim) {
-			console.log(`[occ] live-session cap (${this.maxLiveSessions}) reached — evicting idle session=${victim.id}`);
+			logInfo(`[occ] live-session cap (${this.maxLiveSessions}) reached — evicting idle session=${victim.id}`);
 			this.dropActor(victim);
 		} else {
-			console.warn(
+			logWarn(
 				`[occ] live-session cap (${this.maxLiveSessions}) reached but all sessions are active — exceeding cap temporarily`
 			);
 		}

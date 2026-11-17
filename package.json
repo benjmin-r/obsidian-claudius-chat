@@ -12,7 +12,7 @@
 		"build": "npm run build -w @occ/protocol && npm run build -w @occ/server && npm run build -w @occ/plugin",
 		"test": "npm run test --workspaces --if-present",
 		"test:coverage": "npm run test:coverage --workspaces --if-present",
-		"lint": "eslint packages/plugin/src",
+		"lint": "eslint packages/protocol/src packages/server/src packages/plugin/src",
 		"clean": "rm -rf packages/*/dist packages/*/coverage packages/plugin/main.js"
 	},
 	"license": "MIT",

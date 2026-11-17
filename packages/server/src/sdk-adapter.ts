@@ -48,10 +48,10 @@ export const runQuery: RunQuery = (prompt, options) => {
 			model: options.model,
 			permissionMode: options.permissionMode, // 'default' routes tools through canUseTool
 			includePartialMessages: true, // incremental text streaming
-			canUseTool: options.canUseTool as never,
+			canUseTool: options.canUseTool,
 			...(options.effort ? { effort: options.effort } : {}),
 			...(options.resume ? { resume: options.resume } : {}),
-		} as never,
+		},
 	}) as unknown as SdkQuery;
 
 	// Opus redacts raw extended-thinking (the thinking block streams empty); request

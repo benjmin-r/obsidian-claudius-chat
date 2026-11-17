@@ -5,11 +5,12 @@
  */
 
 import type { IncomingMessage } from "node:http";
-import { WebSocketServer, type WebSocket } from "ws";
+import { WebSocketServer, type RawData, type WebSocket } from "ws";
 import type { BridgeEvent, ClientMessage } from "@occ/protocol";
 import { Connection, createWriterRegistry, type WriterRegistry } from "./connection";
 import type { ServerConfig } from "./config";
 import type { SessionManager } from "./session-manager";
+import { logInfo, logWarn } from "./log";
 
 const CLIENT_MESSAGE_TYPES = new Set([
 	"hello",
@@ -49,6 +50,12 @@ export interface Transport {
 	close(): Promise<void>;
 }
 
+/** A text frame's payload as a string; `ws` delivers a Buffer, a Buffer[] (fragments) or an ArrayBuffer. */
+function rawToText(data: RawData): string {
+	if (Array.isArray(data)) return Buffer.concat(data).toString("utf8");
+	return (Buffer.isBuffer(data) ? data : Buffer.from(data)).toString("utf8");
+}
+
 export function startTransport(config: ServerConfig, manager: SessionManager): Transport {
 	const writers = createWriterRegistry();
 	const wss = new WebSocketServer({ host: config.host, port: config.port });
@@ -59,31 +66,31 @@ export function startTransport(config: ServerConfig, manager: SessionManager): T
 		const ip = req.socket.remoteAddress ?? "?";
 		// Lightweight observability for the testing phase. We never log message
 		// content (e.g. user_message text) or the bearer token — only types/ids.
-		console.log(`[occ] #${id} connected (${ip})`);
+		logInfo(`[occ] #${id} connected (${ip})`);
 
 		const send = (event: BridgeEvent): void => {
-			if (event.type === "error") console.warn(`[occ] #${id} -> error: ${event.message}`);
+			if (event.type === "error") logWarn(`[occ] #${id} -> error: ${event.message}`);
 			if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(event));
 		};
 		const connection = new Connection({ manager, token: config.token, writers, send });
 
 		ws.on("message", (data) => {
-			const msg = parseClientMessage(data.toString());
+			const msg = parseClientMessage(rawToText(data));
 			if (!msg) {
-				console.warn(`[occ] #${id} malformed frame`);
+				logWarn(`[occ] #${id} malformed frame`);
 				send({ type: "error", message: "Malformed message." });
 				return;
 			}
-			console.log(`[occ] #${id} <- ${msg.type}${"sessionId" in msg && msg.sessionId ? ` (${msg.sessionId})` : ""}`);
+			logInfo(`[occ] #${id} <- ${msg.type}${"sessionId" in msg && msg.sessionId ? ` (${msg.sessionId})` : ""}`);
 			const result = connection.handle(msg);
 			if (result.close) {
-				console.warn(`[occ] #${id} closing (auth/protocol rejected)`);
+				logWarn(`[occ] #${id} closing (auth/protocol rejected)`);
 				ws.close();
 			}
 		});
 
 		ws.on("close", () => {
-			console.log(`[occ] #${id} disconnected`);
+			logInfo(`[occ] #${id} disconnected`);
 			connection.close();
 		});
 		ws.on("error", () => connection.close());

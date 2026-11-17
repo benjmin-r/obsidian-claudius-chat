@@ -1,0 +1,12 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"noEmit": false,
+		"rootDir": "src",
+		"outDir": "dist",
+		"baseUrl": ".",
+		"paths": {
+			"@occ/protocol": ["../protocol/dist/index.d.ts"]
+		}
+	}
+}

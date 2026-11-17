@@ -44,11 +44,12 @@ export function mapSdkEvent(msg: SdkMessage, sessionId: string): RenderEvent[] {
 			return mapUserResult((msg as { message?: { content?: unknown } }).message, sid);
 		case "result": {
 			const cost = (msg as { total_cost_usd?: unknown }).total_cost_usd;
+			const subtype = (msg as { subtype?: unknown }).subtype;
 			return [
 				{
 					type: "done",
 					sessionId: sid,
-					subtype: String((msg as { subtype?: unknown }).subtype ?? "success"),
+					subtype: typeof subtype === "string" ? subtype : "success",
 					isError: Boolean((msg as { is_error?: unknown }).is_error),
 					...(typeof cost === "number" ? { costUsd: cost } : {}),
 				},

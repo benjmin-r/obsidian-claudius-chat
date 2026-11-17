@@ -47,7 +47,7 @@ export function sweepOrphanedAgents(deps: SweepDeps): number[] {
 		if (pid === deps.ownPid) continue;
 		const cmdline = deps.cmdline(pid);
 		if (!cmdline || !isAgentSubprocessCmdline(cmdline)) continue;
-		if (isDescendant(pid, deps.ownPid, deps.parentOf)) continue; // our own live child — never kill
+		if (isDescendant(pid, deps.ownPid, (p) => deps.parentOf(p))) continue; // our own live child — never kill
 		if (deps.kill(pid)) swept.push(pid);
 	}
 	return swept;

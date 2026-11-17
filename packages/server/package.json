@@ -4,7 +4,7 @@
 	"description": "Claude Agent SDK service: server-owned long-lived sessions relayed to the Obsidian plugin over a token-authenticated WebSocket.",
 	"main": "dist/index.js",
 	"scripts": {
-		"build": "tsc -p tsconfig.json",
+		"build": "tsc -p tsconfig.build.json",
 		"start": "node dist/index.js",
 		"test": "jest",
 		"test:coverage": "jest --coverage"

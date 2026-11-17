@@ -37,6 +37,7 @@ import type {
 	RunQuery,
 	UserInputMessage,
 } from "./ports";
+import { logInfo, logWarn } from "./log";
 
 export interface SessionActorDeps {
 	runQuery: RunQuery;
@@ -202,7 +203,7 @@ export class SessionActor {
 			// Diagnostic: interrupting while a permission is outstanding abandons it; the
 			// SDK then records the tool as rejected with NO user decision. This is the
 			// suspected source of "rejected without interaction" (see reload/drop path).
-			console.warn(
+			logWarn(
 				`[occ][perm] interrupt() with ${this.pendingPermissions.size} pending permission(s) session=${this.id} ids=[${[...this.pendingPermissions.keys()].join(",")}]`
 			);
 		}
@@ -286,7 +287,7 @@ export class SessionActor {
 		if (!resolve) return;
 		this.pendingPermissions.delete(toolUseId);
 		if (this.pendingRequest?.toolUseId === toolUseId) this.pendingRequest = undefined;
-		console.log(`[occ][perm] ${allow ? "ALLOW" : "DENY"} (user) session=${this.id} id=${toolUseId}`);
+		logInfo(`[occ][perm] ${allow ? "ALLOW" : "DENY"} (user) session=${this.id} id=${toolUseId}`);
 		if (allow) {
 			resolve({ behavior: "allow", updatedInput: this.lastInputs.get(toolUseId) ?? {} });
 		} else {
@@ -306,7 +307,7 @@ export class SessionActor {
 	autoDenyPending(reason: string): void {
 		if (this.pendingPermissions.size === 0) return;
 		for (const [toolUseId, resolve] of this.pendingPermissions) {
-			console.warn(`[occ][perm] DENY (auto: expired) session=${this.id} id=${toolUseId}`);
+			logWarn(`[occ][perm] DENY (auto: expired) session=${this.id} id=${toolUseId}`);
 			resolve({ behavior: "deny", message: reason });
 		}
 		this.pendingPermissions.clear();
@@ -443,7 +444,7 @@ export class SessionActor {
 		// instead, instructing Claude to ask in plain text and wait, so the user actually
 		// gets to answer (as a normal turn). See memory occ-bug-followup-questions-not-rendered.
 		if (toolName === "AskUserQuestion") {
-			console.log(`[occ][perm] DENY (AskUserQuestion→plain-text) session=${this.id} id=${opts.toolUseID ?? "?"}`);
+			logInfo(`[occ][perm] DENY (AskUserQuestion→plain-text) session=${this.id} id=${opts.toolUseID ?? "?"}`);
 			return Promise.resolve<PermissionResult>({
 				behavior: "deny",
 				message:
@@ -457,7 +458,7 @@ export class SessionActor {
 		}
 		const toolUseId = opts.toolUseID ?? `perm-${(this.permissionCounter += 1)}`;
 		this.lastInputs.set(toolUseId, input);
-		console.log(`[occ][perm] REQUEST session=${this.id} tool=${toolName} id=${toolUseId}`);
+		logInfo(`[occ][perm] REQUEST session=${this.id} tool=${toolName} id=${toolUseId}`);
 		// Diagnostic: if the SDK aborts this tool (interrupt / query teardown) while we're
 		// still waiting, the permission resolves with NO user decision. Log it so we can
 		// confirm the "rejected without interaction" reports against the reload/drop path.
@@ -465,7 +466,7 @@ export class SessionActor {
 			"abort",
 			() => {
 				if (this.pendingPermissions.has(toolUseId)) {
-					console.warn(`[occ][perm] ABORTED (signal, no user decision) session=${this.id} tool=${toolName} id=${toolUseId}`);
+					logWarn(`[occ][perm] ABORTED (signal, no user decision) session=${this.id} tool=${toolName} id=${toolUseId}`);
 				}
 			},
 			{ once: true }

@@ -3,6 +3,7 @@
  * and start the WebSocket transport bound to the Tailscale IP.
  */
 
+import { setInterval } from "node:timers";
 import { loadConfig } from "./config";
 import {
 	archiveStored,
@@ -16,6 +17,7 @@ import {
 } from "./sdk-adapter";
 import { SessionManager } from "./session-manager";
 import { startTransport } from "./ws-transport";
+import { logInfo } from "./log";
 
 function main(): void {
 	const config = loadConfig();
@@ -25,8 +27,7 @@ function main(): void {
 	// yet, so every match is a genuine orphan.
 	const swept = sweepOrphanedAgentsFromProc();
 	if (swept.length > 0) {
-		// eslint-disable-next-line no-console
-		console.log(`[occ] swept ${swept.length} orphaned agent subprocess(es) from a previous run: [${swept.join(",")}]`);
+		logInfo(`[occ] swept ${swept.length} orphaned agent subprocess(es) from a previous run: [${swept.join(",")}]`);
 	}
 
 	let counter = 0;
@@ -68,8 +69,7 @@ function main(): void {
 	const stallReaper = setInterval(() => manager.reapStalledTurns(5 * 60_000), 60_000);
 	stallReaper.unref();
 
-	// eslint-disable-next-line no-console
-	console.log(`[occ] listening on ws://${config.host}:${config.port} (cwd=${config.vaultCwd}, model=${config.defaultModel})`);
+	logInfo(`[occ] listening on ws://${config.host}:${config.port} (cwd=${config.vaultCwd}, model=${config.defaultModel})`);
 
 	const shutdown = (): void => {
 		void transport.close().finally(() => process.exit(0));
