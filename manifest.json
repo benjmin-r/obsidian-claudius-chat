@@ -2,8 +2,8 @@
 	"id": "claudius-chat",
 	"name": "Claudius Chat",
 	"version": "0.1.0",
-	"minAppVersion": "1.4.0",
-	"description": "Chat with Claude in an Obsidian sidebar on desktop and phone. The agent runs on a server you host, so your sessions keep going when your device sleeps.",
+	"minAppVersion": "1.7.2",
+	"description": "Chat with Claude in a sidebar on desktop and phone. The agent runs on a server you host, so your sessions keep going when your device sleeps.",
 	"author": "Benjamin Reitzammer",
 	"authorUrl": "https://github.com/benjmin-r",
 	"isDesktopOnly": false

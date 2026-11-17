@@ -1,15 +1,19 @@
 /* Claudius Chat sidebar */
 
 /* Utility: hide an element via a class instead of a hardcoded inline style.
-   `!important` so it overrides a base rule's own `display` (e.g. inline-flex). */
-.occ-hidden {
-	display: none !important;
+   The doubled class raises specificity above any single-class `display` rule on
+   the hidden element (e.g. inline-flex) without `!important`. */
+.occ-hidden.occ-hidden {
+	display: none;
 }
 
 /* Invalid text input (e.g. an out-of-range reconnect delay): flag via a class
    rather than setting `style.borderColor` in JS. */
-.occ-input-invalid {
-	border-color: var(--text-error) !important;
+.setting-item-control input.occ-input-invalid,
+.setting-item-control input.occ-input-invalid:hover,
+.setting-item-control input.occ-input-invalid:focus,
+.setting-item-control input.occ-input-invalid:active {
+	border-color: var(--text-error);
 }
 
 /* Full-width modal text input (Rename session). */

@@ -21,6 +21,7 @@ describe("plugin identity", () => {
 		expect(manifest.id).toMatch(/^[a-z-]+$/);
 		expect(manifest.id).not.toMatch(/obsidian|plugin$/);
 		expect(manifest.name).not.toMatch(/obsidian|plugin/i);
+		expect(manifest.description).not.toMatch(/obsidian/i);
 		expect(manifest.description.length).toBeLessThanOrEqual(250);
 		expect(manifest.description.endsWith(".")).toBe(true);
 	});

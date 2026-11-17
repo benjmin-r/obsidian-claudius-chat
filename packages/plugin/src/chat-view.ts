@@ -455,9 +455,9 @@ export class ChatView extends ItemView {
 			cc.style.setProperty("--occ-msg-bottom", `${this.inputRowEl.offsetHeight + 18}px`);
 			cc.addClass("occ-kb-open");
 		} else {
-			cc.style.height = "";
-			cc.style.minHeight = "";
-			cc.style.maxHeight = "";
+			cc.style.removeProperty("height");
+			cc.style.removeProperty("min-height");
+			cc.style.removeProperty("max-height");
 			cc.removeClass("occ-kb-open");
 			cc.style.removeProperty("--occ-msg-top");
 			cc.style.removeProperty("--occ-msg-bottom");
