@@ -146,15 +146,12 @@ installing 0.5.0 next to the repo's and linting a clean checkout.
 | `no-console` warnings (server) | `console.log` | `log.ts` (stdout/stderr) |
 | `prefer-window-timers` (`index.ts`) | bare `setInterval` | `import { setInterval } from "node:timers"` (no `window` in Node) |
 | `unbound-method`, redundant assertion, `no-base-to-string` | real nits | fixed (`orphan-sweep.ts`, `sdk-adapter.ts`, `ws-transport.ts`, `map-sdk-events.ts`) |
-| CSS `!important` (9) | defeating base rules | 3 removed (`.occ-hidden`, `.occ-input-invalid`); see below |
+| CSS `!important` (9) | defeating base rules | all removed: `.occ-hidden` and `.occ-input-invalid` by specificity, the toolbar and activity icons and the keyboard `flex: none` by anchoring on the leaf's `data-type` (`tests/identity.test.ts` guards it) |
 
 **Accepted warnings** (expect these in the next review; they do not block):
 
 - `no-nodejs-modules` for `node:fs|os|path|http` in `packages/server`. The server is a Node
   program and is not part of `main.js` (checked: the bundle only requires `obsidian`).
-- `!important` on `.occ-toolbar svg` (icon size), `.occ-activity-header svg`, and
-  `.occ-chat.occ-kb-open { flex: none }`. They override Obsidian's own rules, and the last
-  one is the iPad keyboard fix. Removing them needs a device to verify.
 
 **Reproduce the review locally** (from the repo root, before every release):
 
@@ -169,7 +166,10 @@ npm run lint
 Still to do for this fix:
 
 - ⏳ Re-run **Review branch** on the fix branch; expect only the accepted warnings.
-- ⏳ By hand, on a device: the file-suggest popup, session picker, scroll-to-bottom pill and
+- ⏳ After the `data-type` anchoring (2026-11-17, second review): toolbar and activity icons
+  still square at 18px/11px, and the iPad keyboard layout still holds with the keyboard open
+  (`.occ-kb-open` lost its `!important`).
+- ✅ By hand, on a device (2026-11-17): the file-suggest popup, session picker, scroll-to-bottom pill and
   collapsed tool bodies still hide and show (`.occ-hidden` changed), and the keyboard layout on
   iPad/iPhone still resets after the keyboard closes (`removeProperty` replaced `= ""`).
 - ⏳ Server: restart it after merging; the new log module and frame decoder are exercised

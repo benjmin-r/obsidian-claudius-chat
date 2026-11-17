@@ -2,7 +2,7 @@
 
 /* Utility: hide an element via a class instead of a hardcoded inline style.
    The doubled class raises specificity above any single-class `display` rule on
-   the hidden element (e.g. inline-flex) without `!important`. */
+   the hidden element (e.g. inline-flex) without forcing precedence. */
 .occ-hidden.occ-hidden {
 	display: none;
 }
@@ -34,11 +34,13 @@
    from the native keyboard event (see chat-view setKeyboardInset). The view is
    sized to end at the keyboard top; the composer pins to that bottom and the
    messages become a definite, scrollable band above it. */
-.occ-chat.occ-kb-open {
+/* The `flex: none` below defeats the flex-grow stretch / min-content floor. It must
+   outrank Obsidian's own view rules (the former inline style did), so the selector is
+   anchored on the leaf's `data-type` instead of forcing precedence. That attribute is
+   the view type, pinned by tests/identity.test.ts. */
+.workspace-leaf-content[data-type="claudius-chat-view"] .occ-chat.occ-kb-open {
 	position: relative;
-	/* Defeats the flex-grow stretch / min-content floor; !important keeps the
-	   precedence the former inline style had over Obsidian's own view rules. */
-	flex: none !important;
+	flex: none;
 }
 .occ-chat.occ-kb-open .occ-messages-wrap {
 	position: absolute;
@@ -104,12 +106,12 @@
    given a fixed square size, or it can lay out non-square. (The icons looking "squished"
    on the iPad keyboard was actually the whole toolbar collapsing — see flex:0 0 auto
    above — not the icons themselves.) */
-.occ-toolbar svg,
-.occ-toolbar .svg-icon {
-	flex: 0 0 auto !important;
-	width: 18px !important;
-	height: 18px !important;
-	min-width: 18px !important;
+.workspace-leaf-content[data-type="claudius-chat-view"] .occ-toolbar svg,
+.workspace-leaf-content[data-type="claudius-chat-view"] .occ-toolbar .svg-icon {
+	flex: 0 0 auto;
+	width: 18px;
+	height: 18px;
+	min-width: 18px;
 }
 
 .occ-tool-btn {
@@ -434,9 +436,9 @@
 .occ-activity-header:hover {
 	color: var(--text-muted);
 }
-.occ-activity-header svg {
-	width: 11px !important;
-	height: 11px !important;
+.workspace-leaf-content[data-type="claudius-chat-view"] .occ-activity-header svg {
+	width: 11px;
+	height: 11px;
 }
 .occ-activity-chevron {
 	flex: 0 0 auto;

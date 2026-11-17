@@ -37,11 +37,14 @@ Reproduced locally: the review runs **eslint-plugin-obsidianmd 0.5.0**, over
 - *Timers:* `import { setInterval } from "node:timers"`; `window` does not exist
   in Node, and the rule skips bound names.
 - *Style clears:* 0.5.0 flags `style.height = ""`; use `removeProperty`.
-- *`!important`:* removed where only our own rules compete (`.occ-hidden`,
-  `.occ-input-invalid`); kept on the toolbar icons, activity icon and keyboard
-  `flex: none`, which fight Obsidian's own styles (not verifiable headless).
-- *Accepted warnings:* `node:fs|os|path|http` imports in the server, and the
-  `!important` above. The server is a Node program, not part of `main.js`.
+- *`!important`:* removed. Where only our own rules compete (`.occ-hidden`,
+  `.occ-input-invalid`) by specificity; where Obsidian's rules compete (toolbar and
+  activity icons, keyboard `flex: none`) by anchoring the selector on
+  `.workspace-leaf-content[data-type="claudius-chat-view"]` (specificity ~0,4,0).
+  First kept as accepted warnings, removed after the second review reported them;
+  verified on devices. A test forbids `!important` and pins the anchor.
+- *Accepted warnings:* `node:fs|os|path|http` imports in the server. The server is a
+  Node program, not part of `main.js`.
 
 **Files:** `eslint.config.mjs`, `package.json`, `manifest.json`, `versions.json`,
 `packages/protocol/package.json`, `packages/server/{tsconfig*.json,package.json,src/*}`,

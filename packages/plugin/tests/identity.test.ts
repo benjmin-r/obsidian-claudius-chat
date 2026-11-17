@@ -26,6 +26,12 @@ describe("plugin identity", () => {
 		expect(manifest.description.endsWith(".")).toBe(true);
 	});
 
+	it("keeps styles.css free of !important and anchored on the view type", () => {
+		const css = readFileSync(join(repoRoot, "packages", "plugin", "styles.css"), "utf8");
+		expect(css.replace(/\/\*[\s\S]*?\*\//g, "")).not.toContain("!important"); // the directory review warns on it
+		expect(css).toContain(`.workspace-leaf-content[data-type="${VIEW_TYPE_CLAUDIUS_CHAT}"]`);
+	});
+
 	it("lists the manifest version in versions.json", () => {
 		expect(versions[manifest.version]).toBe(manifest.minAppVersion);
 	});
