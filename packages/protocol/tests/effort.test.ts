@@ -10,7 +10,12 @@ describe("supportedEffortLevels", () => {
 		expect(supportedEffortLevels("claude-sonnet-5-5")).toEqual(["low", "medium", "high", "max"]);
 	});
 
-	it("gives Haiku and unknown models none", () => {
+	it("gives Fable 5.1 and Haiku 5.5 every level", () => {
+		expect(supportedEffortLevels("claude-fable-5-1")).toEqual(["low", "medium", "high", "xhigh", "max"]);
+		expect(supportedEffortLevels("claude-haiku-5-5")).toEqual(["low", "medium", "high", "xhigh", "max"]);
+	});
+
+	it("gives Haiku 4.5 and unknown models none", () => {
 		expect(supportedEffortLevels("claude-haiku-4-5-20251001")).toEqual([]);
 		expect(supportedEffortLevels("something-else")).toEqual([]);
 	});
