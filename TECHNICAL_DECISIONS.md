@@ -43,7 +43,7 @@ Reproduced locally: the review runs **eslint-plugin-obsidianmd 0.5.0**, over
   `.workspace-leaf-content[data-type="claudius-chat-view"]` (specificity ~0,4,0).
   First kept as accepted warnings, removed after the second review reported them;
   verified on devices. A test forbids `!important` and pins the anchor.
-- *Accepted warnings:* `node:fs|os|path|http` imports in the server. The server is a
+- *Accepted warnings:* `node:fs|os|path|http|timers` imports in the server. The server is a
   Node program, not part of `main.js`.
 
 **Files:** `eslint.config.mjs`, `package.json`, `manifest.json`, `versions.json`,

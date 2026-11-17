@@ -150,8 +150,11 @@ installing 0.5.0 next to the repo's and linting a clean checkout.
 
 **Accepted warnings** (expect these in the next review; they do not block):
 
-- `no-nodejs-modules` for `node:fs|os|path|http` in `packages/server`. The server is a Node
-  program and is not part of `main.js` (checked: the bundle only requires `obsidian`).
+- `no-nodejs-modules` for `node:fs|os|path|http|timers` in `packages/server` (the second review
+  also flagged `node:timers`, so that import bought nothing over bare `setInterval`). The server
+  is a Node program and is not part of `main.js` (checked: the bundle only requires `obsidian`).
+  The README's "Network use and disclosures" section says so for human reviewers. Removing
+  the warnings for real would mean moving the server to its own repository; not for 0.1.
 
 **Reproduce the review locally** (from the repo root, before every release):
 

@@ -90,6 +90,7 @@ The agent is Claude Code: it can read, create and edit files and **run shell com
 - **Network use.** The plugin makes one kind of connection: a WebSocket to **your own server**, at the address you enter in settings, over your Tailscale network. It contacts no other service, sends **no telemetry or analytics**, and never updates itself. All requests to Claude come from your server, not from the plugin.
 - **Account required.** Full functionality needs the server above and a Claude subscription signed in on that host.
 - **Files.** The plugin only reads its own settings. The agent's file access happens on the server, inside your vault copy.
+- **What is in this repo.** `packages/plugin` is the Obsidian plugin and the only part bundled into `main.js`: it uses no Node.js APIs and runs on mobile. `packages/server` is a separate Node.js program that runs on your host and never inside Obsidian, so its use of Node built-ins (`fs`, `http`, ...) is expected. `packages/protocol` holds the message types the two share.
 - **Unofficial.** This is an independent community project, not affiliated with, endorsed by or sponsored by Anthropic. "Claude" is a trademark of Anthropic, used here only to say what the plugin connects to.
 
 ### Subscription use
