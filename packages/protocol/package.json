@@ -1,6 +1,6 @@
 {
 	"name": "@occ/protocol",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Pure shared wire types, SDK→bridge event mapping, and destructive-tool predicate.",
 	"main": "dist/index.js",
 	"types": "src/index.ts",

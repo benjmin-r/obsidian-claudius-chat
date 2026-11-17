@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-claudius-chat",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"private": true,
 	"description": "Structured Obsidian chat on the Claude Agent SDK: a server-owned long-lived session relayed over Tailscale to an own Obsidian plugin.",
 	"workspaces": [
