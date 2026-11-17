@@ -178,6 +178,21 @@ Still to do for this fix:
 - ⏳ Server: restart it after merging; the new log module and frame decoder are exercised
   only by an in-process check (no unit tests: shells are excluded from coverage).
 
+## Community review, release check (2026-11-17, tag 0.1.0)
+
+Passed, with four Recommendations (no errors):
+
+- **Vault enumeration** (`vault.getFiles()` in `file-suggest.ts`, for `@` mentions) and
+  **clipboard access** (write-only, user-initiated copy actions): needed by the features.
+  Disclosed in the README's "Network use and disclosures" section, which wrongly said the
+  plugin only reads its own settings before this.
+- **localStorage** (unsent drafts, debug log): kept. The app-level replacement,
+  `app.saveLocalStorage`, is `@since 1.8.7` (would raise `minAppVersion` for a
+  Recommendation), and `saveData` would rewrite `data.json` on every keystroke. Disclosed.
+- **Missing artifact attestations**: `release.yml` now attests the three assets
+  (`actions/attest-build-provenance`). It cannot apply to 0.1.0, whose release already
+  exists; it starts with 0.1.1. Verify with `gh attestation verify main.js --repo benjmin-r/obsidian-claudius-chat`.
+
 ## Phase 1 — Ship via BRAT (now)
 
 Remaining Phase-1 items need a real device/vault or a maintainer action — they can't
