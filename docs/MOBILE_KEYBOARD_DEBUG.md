@@ -18,9 +18,9 @@ report format.
 
 ## How a report is produced
 
-0. In **Settings → Claude Chat → Keyboard debug panel**, turn it on, then reopen the chat
+0. In **Settings → Claudius Chat → Keyboard debug panel**, turn it on, then reopen the chat
    view (toggle the plugin or reopen the leaf — the panel mounts on view open).
-1. Reporter opens the Claude Chat view.
+1. Reporter opens the Claudius Chat view.
 2. A green **`Copy KB (n)`** button is fixed top-right (`top:56px right:6px`); `n` is the
    number of snapshots captured so far (it ticks up every 500ms, proving it's alive).
 3. Reporter taps the message input to raise the keyboard, waits ~2s, then taps **Copy KB**
@@ -165,7 +165,7 @@ Decided from real device reports; see `setKeyboardInset` / `setKeyboardInsetTabl
 cd ~/projects/obsidian-claude-chat
 npm run build -w @occ/plugin
 cp packages/plugin/main.js packages/plugin/styles.css manifest.json \
-   ~/vaults/benjamin/.obsidian/plugins/claude-chat/          # never copy data.json
+   ~/vaults/benjamin/.obsidian/plugins/claudius-chat/          # never copy data.json
 XDG_RUNTIME_DIR=/run/user/$(id -u) systemctl --user restart obsidian-sync.service
 ```
 

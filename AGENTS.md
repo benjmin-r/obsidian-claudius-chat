@@ -6,12 +6,40 @@ Guidelines for AI agents (Claude, GPT, etc.) and developers working in this repo
 This is a structured Obsidian chat on the Claude Agent SDK: a server owns
 long-lived sessions; the plugin is a detachable view. npm-workspaces monorepo.
 
+## Naming: Claude vs Claudius (read before writing any copy)
+
+- **Claude** is Anthropic's: the model, Claude Code, and the Claude Agent SDK
+  (a library). "The agent" is the Claude Code process the server spawns through
+  the SDK. It runs on the host.
+- **Claudius** is this project: the **Obsidian plugin** (runs in Obsidian, on the
+  user's devices) and the **Node.js server** (runs on the host). Product name
+  "Claudius Chat", plugin id `claudius-chat`, repo `obsidian-claudius-chat`.
+- **Claudius talks to Claude, on the host.** The Claudius server embeds the SDK,
+  spawns Claude Code, applies the permission policy to its tool calls, and relays
+  its events to the plugin. The plugin never talks to Claude directly.
+- **Shorthand: OCC** = Obsidian Claudius Chat. Keep `occ-*`, `OCC_*`, `@occ/*`
+  and `obsidian://occ-chat`. Never shorten to "CC" (too close to Claude Code).
+
+Rules for copy, comments and identifiers:
+
+- Our product and its parts are **Claudius**: "the Claudius server", "Claudius
+  Chat settings", notices about the plugin. Never "Claude Chat", "Claude server"
+  or "Claude plugin", and not "SDK server" either.
+- What the model or agent does, says or is are **Claude**: "Message Claude…",
+  `**Claude**` turn labels in exports, "Claude Code", "Claude subscription", the
+  `claude` CLI, model ids.
+- A **session** is a Claude Code session (resumable from the `claude` CLI); the
+  Claudius server decides which ones are live. Say "Claude session".
+- The `claudius-demo` vault's persona "Claudius" is a fictional character for
+  demos and has nothing to do with the naming above.
+
 ## Packages
 
 - **`packages/protocol`** — pure, dependency-free: the JSON-over-WebSocket wire
   types, SDK→event mappers, and predicates. Imported by **both** server and
   plugin. The **single source of truth** for the protocol.
-- **`packages/server`** — the Agent-SDK service. Ports-and-adapters: a pure-ish
+- **`packages/server`** — the Claudius server (Node.js; wraps the Claude Agent
+  SDK). Ports-and-adapters: a pure-ish
   core (`SessionActor` / `SessionManager` / `Connection`) driven by **injected
   dependencies**, plus thin I/O shells (`sdk-adapter.ts` wraps the SDK,
   `ws-transport.ts` wraps the socket).
@@ -94,7 +122,7 @@ stop; that breaks the invariants.
 This plugin is more network-capable than a typical Obsidian plugin (it drives a
 remote agent), so be deliberate:
 
-- **One network destination:** the self-hosted SDK server, over a
+- **One network destination:** the self-hosted Claudius server, over a
   **token-authenticated WebSocket** on the user's **Tailscale** tailnet. No
   third-party services, no telemetry, no analytics.
 - **Never fetch-and-eval remote code** or auto-update outside normal releases.

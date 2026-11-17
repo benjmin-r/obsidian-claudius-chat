@@ -7,7 +7,7 @@ import {
 	type SettingDefinitionGroup,
 	type SettingDefinitionItem,
 } from "obsidian";
-import type ClaudeChatPlugin from "./main";
+import type ClaudiusChatPlugin from "./main";
 import { EFFORT_DEFAULT_LABEL, EFFORT_LABELS, MODEL_OPTIONS, PERMISSION_MODE_OPTIONS } from "./settings-types";
 import { EFFORT_LEVELS } from "@occ/protocol";
 
@@ -53,10 +53,10 @@ function group(heading: string, intro: string, items: SettingDefinition[]): Sett
  * renders (and indexes for settings search) that list itself; older versions
  * never call it and fall back to `display()`, which draws the same list.
  */
-export class ClaudeChatSettingTab extends PluginSettingTab {
-	plugin: ClaudeChatPlugin;
+export class ClaudiusChatSettingTab extends PluginSettingTab {
+	plugin: ClaudiusChatPlugin;
 
-	constructor(app: App, plugin: ClaudeChatPlugin) {
+	constructor(app: App, plugin: ClaudiusChatPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -65,10 +65,10 @@ export class ClaudeChatSettingTab extends PluginSettingTab {
 	// group headings below are for the four sections.
 	getSettingDefinitions(): SettingDefinitionItem[] {
 		return [
-			group("Connection", "Where the plugin finds your Claude Chat server and how it reconnects.", [
+			group("Connection", "Where the plugin finds your Claudius Chat server and how it reconnects.", [
 				{
 					name: "Server URL",
-					desc: "ws:// address of the Claude SDK server on your tailnet, including port.",
+					desc: "ws:// address of the Claudius Chat server on your tailnet, including port.",
 					control: { type: "text", key: "serverUrl", placeholder: "ws://host.tailnet.ts.net:8765" },
 				},
 				{
@@ -127,7 +127,7 @@ export class ClaudeChatSettingTab extends PluginSettingTab {
 				{
 					name: "Export folder",
 					desc: "Vault folder conversation exports are written to.",
-					control: { type: "text", key: "exportFolder", placeholder: "Claude Conversations" },
+					control: { type: "text", key: "exportFolder", placeholder: "Claudius Conversations" },
 				},
 				{
 					name: "Group exports by month",

@@ -9,8 +9,8 @@ import { isEffortLevel, type EffortLevel, type PermissionMode } from "@occ/proto
 /** A reasoning level, or "default" to leave it to the model. */
 export type EffortSetting = EffortLevel | "default";
 
-export interface ClaudeChatSettings {
-	/** ws:// URL of the SDK server on the tailnet, including port. */
+export interface ClaudiusChatSettings {
+	/** ws:// URL of the Claudius server on the tailnet, including port. */
 	serverUrl: string;
 	/** App-level bearer token presented on hello. */
 	token: string;
@@ -44,7 +44,7 @@ export interface ClaudeChatSettings {
 	exportGroupByMonth: boolean;
 }
 
-export const DEFAULT_SETTINGS: ClaudeChatSettings = {
+export const DEFAULT_SETTINGS: ClaudiusChatSettings = {
 	serverUrl: "ws://your-host.your-tailnet.ts.net:8765",
 	token: "",
 	defaultModel: "claude-sonnet-5-5",
@@ -54,7 +54,7 @@ export const DEFAULT_SETTINGS: ClaudeChatSettings = {
 	reconnectDelayMs: 1500,
 	debugKeyboardPanel: false,
 	debugConnectionPanel: false,
-	exportFolder: "Claude Conversations",
+	exportFolder: "Claudius Conversations",
 	exportGroupByMonth: false,
 };
 

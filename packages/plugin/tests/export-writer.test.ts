@@ -38,25 +38,25 @@ function makeMeta(sessionId: string): ExportMeta {
 describe("writeExportFile", () => {
 	it("creates every missing folder segment before writing a new file", async () => {
 		const { vault, folders, files } = makeFakeVault();
-		const path = await writeExportFile(vault, "Notes/Claude Conversations", false, makeMeta("s1"), "content");
-		expect(path).toBe("Notes/Claude Conversations/20260818 - My Chat.md");
+		const path = await writeExportFile(vault, "Notes/Claudius Conversations", false, makeMeta("s1"), "content");
+		expect(path).toBe("Notes/Claudius Conversations/20260818 - My Chat.md");
 		expect(folders.has("Notes")).toBe(true);
-		expect(folders.has("Notes/Claude Conversations")).toBe(true);
+		expect(folders.has("Notes/Claudius Conversations")).toBe(true);
 		expect(files.get(path)).toBe("content");
 	});
 
 	it("creates the YYYY-MM subfolder when grouping by month", async () => {
 		const { vault, folders } = makeFakeVault();
-		const path = await writeExportFile(vault, "Claude Conversations", true, makeMeta("s1"), "content");
-		expect(path).toBe("Claude Conversations/2026-08/20260818 - My Chat.md");
-		expect(folders.has("Claude Conversations")).toBe(true);
-		expect(folders.has("Claude Conversations/2026-08")).toBe(true);
+		const path = await writeExportFile(vault, "Claudius Conversations", true, makeMeta("s1"), "content");
+		expect(path).toBe("Claudius Conversations/2026-08/20260818 - My Chat.md");
+		expect(folders.has("Claudius Conversations")).toBe(true);
+		expect(folders.has("Claudius Conversations/2026-08")).toBe(true);
 	});
 
 	it("skips createFolder for a segment that already exists", async () => {
 		const { vault, folders, folderCreateAttempts } = makeFakeVault();
-		folders.add("Claude Conversations");
-		await writeExportFile(vault, "Claude Conversations", false, makeMeta("s1"), "content");
+		folders.add("Claudius Conversations");
+		await writeExportFile(vault, "Claudius Conversations", false, makeMeta("s1"), "content");
 		expect(folderCreateAttempts).toEqual([]);
 	});
 
@@ -65,40 +65,40 @@ describe("writeExportFile", () => {
 		vault.createFolder = async () => {
 			throw new Error("Folder already exists.");
 		};
-		const path = await writeExportFile(vault, "Claude Conversations", false, makeMeta("s1"), "content");
+		const path = await writeExportFile(vault, "Claudius Conversations", false, makeMeta("s1"), "content");
 		expect(files.get(path)).toBe("content");
 	});
 
 	it("overwrites via modify when the existing file's frontmatter session_id matches", async () => {
 		const { vault, files } = makeFakeVault();
-		const path = "Claude Conversations/20260818 - My Chat.md";
+		const path = "Claudius Conversations/20260818 - My Chat.md";
 		files.set(path, "---\nsession_id: s1\nmodel: claude-sonnet-5\n---\n\nold content");
-		const result = await writeExportFile(vault, "Claude Conversations", false, makeMeta("s1"), "new content");
+		const result = await writeExportFile(vault, "Claudius Conversations", false, makeMeta("s1"), "new content");
 		expect(result).toBe(path);
 		expect(files.get(path)).toBe("new content");
 	});
 
 	it("appends a numeric suffix when the existing file belongs to a different session", async () => {
 		const { vault, files } = makeFakeVault();
-		files.set("Claude Conversations/20260818 - My Chat.md", "---\nsession_id: s1\n---\n\nother session");
-		const path = await writeExportFile(vault, "Claude Conversations", false, makeMeta("s2"), "content");
-		expect(path).toBe("Claude Conversations/20260818 - My Chat (2).md");
+		files.set("Claudius Conversations/20260818 - My Chat.md", "---\nsession_id: s1\n---\n\nother session");
+		const path = await writeExportFile(vault, "Claudius Conversations", false, makeMeta("s2"), "content");
+		expect(path).toBe("Claudius Conversations/20260818 - My Chat (2).md");
 		expect(files.get(path)).toBe("content");
 	});
 
 	it("keeps incrementing the suffix past multiple colliding sessions", async () => {
 		const { vault, files } = makeFakeVault();
-		files.set("Claude Conversations/20260818 - My Chat.md", "---\nsession_id: s1\n---\n\n");
-		files.set("Claude Conversations/20260818 - My Chat (2).md", "---\nsession_id: s2\n---\n\n");
-		const path = await writeExportFile(vault, "Claude Conversations", false, makeMeta("s3"), "content");
-		expect(path).toBe("Claude Conversations/20260818 - My Chat (3).md");
+		files.set("Claudius Conversations/20260818 - My Chat.md", "---\nsession_id: s1\n---\n\n");
+		files.set("Claudius Conversations/20260818 - My Chat (2).md", "---\nsession_id: s2\n---\n\n");
+		const path = await writeExportFile(vault, "Claudius Conversations", false, makeMeta("s3"), "content");
+		expect(path).toBe("Claudius Conversations/20260818 - My Chat (3).md");
 	});
 
 	it("treats unparseable frontmatter as a collision (suffix, not overwrite)", async () => {
 		const { vault, files } = makeFakeVault();
-		files.set("Claude Conversations/20260818 - My Chat.md", "not frontmatter at all");
-		const path = await writeExportFile(vault, "Claude Conversations", false, makeMeta("s1"), "content");
-		expect(path).toBe("Claude Conversations/20260818 - My Chat (2).md");
+		files.set("Claudius Conversations/20260818 - My Chat.md", "not frontmatter at all");
+		const path = await writeExportFile(vault, "Claudius Conversations", false, makeMeta("s1"), "content");
+		expect(path).toBe("Claudius Conversations/20260818 - My Chat (2).md");
 	});
 
 	it("dates the filename by the session's start (createdAt), not its last activity (updatedAt)", async () => {
@@ -110,13 +110,13 @@ describe("writeExportFile", () => {
 			createdAt: Date.parse("2026-08-01T09:00:00.000Z"), // conversation started here
 			updatedAt, // but was last touched on 2026-08-18
 		};
-		const path = await writeExportFile(vault, "Claude Conversations", false, meta, "content");
-		expect(path).toBe("Claude Conversations/20260801 - My Chat.md");
+		const path = await writeExportFile(vault, "Claudius Conversations", false, meta, "content");
+		expect(path).toBe("Claudius Conversations/20260801 - My Chat.md");
 	});
 
 	it("falls back to updatedAt for the filename date when createdAt is unknown", async () => {
 		const { vault } = makeFakeVault();
-		const path = await writeExportFile(vault, "Claude Conversations", false, makeMeta("s1"), "content");
-		expect(path).toBe("Claude Conversations/20260818 - My Chat.md");
+		const path = await writeExportFile(vault, "Claudius Conversations", false, makeMeta("s1"), "content");
+		expect(path).toBe("Claudius Conversations/20260818 - My Chat.md");
 	});
 });

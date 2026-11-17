@@ -42,7 +42,7 @@ export { conversationLinkFromParts, conversationLinkMarkdown, matchOccTrigger, o
 export function fetchSessions(url: string, token: string, timeoutMs = 6000): Promise<SessionSummary[]> {
 	return new Promise((resolve, reject) => {
 		if (!url.trim()) {
-			reject(new Error("No server URL configured (Claude Chat settings)."));
+			reject(new Error("No server URL configured (Claudius Chat settings)."));
 			return;
 		}
 		let ws: WebSocket;
@@ -66,7 +66,7 @@ export function fetchSessions(url: string, token: string, timeoutMs = 6000): Pro
 		};
 		const timer = window.setTimeout(() => finish(() => reject(new Error("Timed out fetching sessions."))), timeoutMs);
 		ws.onopen = () => ws.send(JSON.stringify({ type: "hello", token }));
-		ws.onerror = () => finish(() => reject(new Error("Couldn't reach the Claude server.")));
+		ws.onerror = () => finish(() => reject(new Error("Couldn't reach the Claudius Chat server.")));
 		ws.onmessage = (ev) => {
 			type Frame = { type?: string; sessions?: SessionSummary[]; message?: string };
 			let msg: Frame;
@@ -186,11 +186,11 @@ export async function insertConversationLink(host: LinkHost, editor: Editor): Pr
 	try {
 		sessions = await fetchSessions(host.settings.serverUrl, host.settings.token);
 	} catch (e) {
-		new Notice(`Claude Chat: ${e instanceof Error ? e.message : "couldn't load sessions"}`);
+		new Notice(`Claudius Chat: ${e instanceof Error ? e.message : "couldn't load sessions"}`);
 		return;
 	}
 	if (sessions.length === 0) {
-		new Notice("Claude Chat: no conversations found.");
+		new Notice("Claudius Chat: no conversations found.");
 		return;
 	}
 	new SessionLinkModal(host.app, sessions, (s) => {

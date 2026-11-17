@@ -1,5 +1,5 @@
 /**
- * Wire protocol for the JSON-over-WebSocket bridge between the SDK server and
+ * Wire protocol for the JSON-over-WebSocket bridge between the Claudius server and
  * the Obsidian plugin. This module is the SINGLE SOURCE OF TRUTH for the
  * protocol — both `@occ/server` and `@occ/plugin` import these types, which is
  * what prevents the message-shape drift that bit the stock relay plugin.

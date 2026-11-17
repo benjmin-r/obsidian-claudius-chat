@@ -40,14 +40,14 @@ Key facts from those pages:
 
 Already satisfying Obsidian guidelines — no action:
 
-- Command id `open-claude-chat` has no plugin-id prefix (Obsidian adds it automatically).
+- Command ids (`open-chat`, `open-chat-tab`) have no plugin-id prefix (Obsidian adds it automatically).
 - No global `app`; `onunload` does not detach leaves.
 - No Node/Electron APIs in the plugin, so `isDesktopOnly: false` is honest and the
   mobile-safe claim holds.
 - No `innerHTML`/`outerHTML`, no sample placeholders (`MyPlugin`/`SampleSettingTab`),
   no telemetry, no self-updater, no ads, no obfuscation.
-- `manifest.name` ("Claude Chat") contains neither "Obsidian" nor "Plugin";
-  `id` ("claude-chat") doesn't contain "obsidian". Description is 100 chars (<=250)
+- `manifest.name` ("Claudius Chat") contains neither "Obsidian" nor "Plugin";
+  `id` ("claudius-chat") doesn't contain "obsidian". Description is 100 chars (<=250)
   and ends with a period.
 - LICENSE present with clear MIT designation.
 
@@ -75,6 +75,11 @@ Automated checks, all run against a clean clone where noted:
 - ✅ Coverage gates (`npm run test:coverage`): pass. Protocol branch coverage was
   86.8% against a 90% threshold and CI did not notice, because CI ran `npm test`
   (no coverage). Added tests; CI now runs `npm run test:coverage`.
+- ✅ Renamed to Claudius Chat (id `claudius-chat`, repo `obsidian-claudius-chat`; TDL-20261117-002).
+  Directory check 2026-11-17: no existing plugin id, name or repo contains "claudius"
+  (10,509 plugins). The directory forbids "obsidian" in an id or name, so the repo name
+  carries it and the plugin does not. `tests/identity.test.ts` now pins id, name, view
+  type, command ids and the `occ-chat` link scheme.
 - ✅ `npm run lint` (eslint-plugin-obsidianmd, the directory review's rules) is in the
   repo and in CI: 0 findings. `minAppVersion` 1.4.0 verified with it (lowest clean
   version; the true floor is 1.3.5, TDL-20261117-003).
@@ -125,8 +130,8 @@ be done from a headless CI checkout:
   unverified with the final keyboard fix — see the handoff notes.)
 - `[HIGH]` ⏳ Screenshot or GIF in the README (streaming sidebar + a permission prompt).
   Highest-leverage adoption item. (Needs a running instance to capture.)
-- `[HIGH]` ✅ Replace `<owner>/obsidian-claude-chat` placeholders with the real GitHub
-  path (`benjmin-r/obsidian-claude-chat`) so the BRAT instructions are copy-pasteable.
+- `[HIGH]` ✅ Replace `<owner>/obsidian-claudius-chat` placeholders with the real GitHub
+  path (`benjmin-r/obsidian-claudius-chat`) so the BRAT instructions are copy-pasteable.
 - `[HIGH]` ⏳ Cut the tag (`git tag 0.1.0 && git push origin 0.1.0`) and confirm the
   Release has all three assets and a BRAT install works. (Maintainer action — pushing a
   tag triggers the release workflow; not done autonomously.)

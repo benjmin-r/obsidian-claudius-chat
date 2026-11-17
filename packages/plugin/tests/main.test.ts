@@ -1,11 +1,11 @@
-import ClaudeChatPlugin from "../src/main";
-import { VIEW_TYPE_CLAUDE_CHAT } from "../src/chat-view";
+import ClaudiusChatPlugin from "../src/main";
+import { VIEW_TYPE_CLAUDIUS_CHAT } from "../src/chat-view";
 
-describe("ClaudeChatPlugin", () => {
+describe("ClaudiusChatPlugin", () => {
 	it("registers the view, commands, ribbon and settings on load", async () => {
-		const plugin = new ClaudeChatPlugin();
+		const plugin = new ClaudiusChatPlugin();
 		await plugin.onload();
-		expect(plugin.registerView).toHaveBeenCalledWith(VIEW_TYPE_CLAUDE_CHAT, expect.any(Function));
+		expect(plugin.registerView).toHaveBeenCalledWith(VIEW_TYPE_CLAUDIUS_CHAT, expect.any(Function));
 		expect(plugin.addCommand).toHaveBeenCalled();
 		expect(plugin.addRibbonIcon).toHaveBeenCalled();
 		expect(plugin.addSettingTab).toHaveBeenCalled();
@@ -13,14 +13,14 @@ describe("ClaudeChatPlugin", () => {
 	});
 
 	it("opens a new right-sidebar leaf when none exists", async () => {
-		const plugin = new ClaudeChatPlugin();
+		const plugin = new ClaudiusChatPlugin();
 		await plugin.onload();
 		await plugin.activateView();
 		expect(plugin.app.workspace.getRightLeaf).toHaveBeenCalled();
 	});
 
 	it("opens a fresh main-area tab for 'open in tab'", async () => {
-		const plugin = new ClaudeChatPlugin();
+		const plugin = new ClaudiusChatPlugin();
 		await plugin.onload();
 		await plugin.openInTab();
 		expect(plugin.app.workspace.getLeaf).toHaveBeenCalledWith("tab");
@@ -29,7 +29,7 @@ describe("ClaudeChatPlugin", () => {
 	it("debounces re-pointing open views after connection settings change", async () => {
 		jest.useFakeTimers();
 		try {
-			const plugin = new ClaudeChatPlugin();
+			const plugin = new ClaudiusChatPlugin();
 			await plugin.onload();
 			const getLeaves = plugin.app.workspace.getLeavesOfType as jest.Mock;
 			getLeaves.mockClear();
@@ -38,14 +38,14 @@ describe("ClaudeChatPlugin", () => {
 			expect(getLeaves).not.toHaveBeenCalled();
 			jest.runAllTimers();
 			expect(getLeaves).toHaveBeenCalledTimes(1);
-			expect(getLeaves).toHaveBeenCalledWith(VIEW_TYPE_CLAUDE_CHAT);
+			expect(getLeaves).toHaveBeenCalledWith(VIEW_TYPE_CLAUDIUS_CHAT);
 		} finally {
 			jest.useRealTimers();
 		}
 	});
 
 	it("reveals an existing leaf instead of creating one", async () => {
-		const plugin = new ClaudeChatPlugin();
+		const plugin = new ClaudiusChatPlugin();
 		await plugin.onload();
 		const leaf = { setViewState: jest.fn() };
 		(plugin.app.workspace.getLeavesOfType as jest.Mock).mockReturnValueOnce([leaf]);
