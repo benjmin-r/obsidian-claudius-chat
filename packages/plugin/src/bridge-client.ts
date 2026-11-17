@@ -152,7 +152,7 @@ export class BridgeClient {
 		this.probePending = true;
 		const before = this.lastSeenAt;
 		this.ws?.send(JSON.stringify({ type: "ping" }));
-		const schedule = this.opts.schedule ?? ((fn, ms) => setTimeout(fn, ms));
+		const schedule = this.opts.schedule ?? ((fn, ms) => window.setTimeout(fn, ms));
 		schedule(() => {
 			this.probePending = false;
 			if (this.isConnected() && this.lastSeenAt === before) {
@@ -311,7 +311,7 @@ export class BridgeClient {
 
 	private startHeartbeat(): void {
 		this.stopHeartbeat();
-		const schedule = this.opts.schedule ?? ((fn, ms) => setTimeout(fn, ms));
+		const schedule = this.opts.schedule ?? ((fn, ms) => window.setTimeout(fn, ms));
 		this.heartbeatHandle = schedule(() => this.heartbeat(), HEARTBEAT_MS);
 	}
 
@@ -329,7 +329,7 @@ export class BridgeClient {
 
 	private stopHeartbeat(): void {
 		if (this.heartbeatHandle === undefined) return;
-		const cancel = this.opts.cancel ?? ((h) => clearTimeout(h as ReturnType<typeof setTimeout>));
+		const cancel = this.opts.cancel ?? ((h) => window.clearTimeout(h as number));
 		cancel(this.heartbeatHandle);
 		this.heartbeatHandle = undefined;
 	}
@@ -365,7 +365,7 @@ export class BridgeClient {
 	}
 
 	private scheduleReconnect(): void {
-		const schedule = this.opts.schedule ?? ((fn, ms) => setTimeout(fn, ms));
+		const schedule = this.opts.schedule ?? ((fn, ms) => window.setTimeout(fn, ms));
 		this.attempts += 1;
 		// capped exponential backoff
 		const delay = Math.min(this.opts.reconnectDelayMs * 2 ** (this.attempts - 1), 30_000);
@@ -375,7 +375,7 @@ export class BridgeClient {
 
 	private cancelReconnect(): void {
 		if (this.reconnectHandle === undefined) return;
-		const cancel = this.opts.cancel ?? ((h) => clearTimeout(h as ReturnType<typeof setTimeout>));
+		const cancel = this.opts.cancel ?? ((h) => window.clearTimeout(h as number));
 		cancel(this.reconnectHandle);
 		this.reconnectHandle = undefined;
 	}

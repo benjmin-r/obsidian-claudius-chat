@@ -1,11 +1,33 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting, type SettingControl, type SettingDefinition, type SettingDefinitionItem } from "obsidian";
 import type ClaudeChatPlugin from "./main";
-import { EFFORT_DEFAULT_LABEL, EFFORT_LABELS, MODEL_OPTIONS, PERMISSION_MODE_OPTIONS, type EffortSetting } from "./settings-types";
-import { EFFORT_LEVELS, type PermissionMode } from "@occ/protocol";
+import { EFFORT_DEFAULT_LABEL, EFFORT_LABELS, MODEL_OPTIONS, PERMISSION_MODE_OPTIONS } from "./settings-types";
+import { EFFORT_LEVELS } from "@occ/protocol";
+
+/** Text settings stored without surrounding whitespace. */
+const TRIMMED_KEYS = new Set(["serverUrl", "exportFolder"]);
+
+const MIN_RECONNECT_DELAY_MS = 100;
+
+const EFFORT_OPTIONS: Record<string, string> = { default: EFFORT_DEFAULT_LABEL };
+for (const level of EFFORT_LEVELS) EFFORT_OPTIONS[level] = EFFORT_LABELS[level];
+
+/** Display text for a stored value: only strings and numbers have one. */
+function asText(value: unknown): string {
+	return typeof value === "string" || typeof value === "number" ? String(value) : "";
+}
+
+/** A definition with a control or a render callback (the only kinds this tab uses). */
+function isRow(def: SettingDefinitionItem): def is SettingDefinition {
+	return "control" in def || "render" in def;
+}
 
 /**
- * Settings tab. Every field is rendered on all platforms (no desktop-only
+ * Settings tab. Every field is shown on all platforms (no desktop-only
  * gating) so mobile users can configure the server URL and token.
+ *
+ * The fields are defined once, in `getSettingDefinitions()`. Obsidian 1.13+
+ * renders (and indexes for settings search) that list itself; older versions
+ * never call it and fall back to `display()`, which draws the same list.
  */
 export class ClaudeChatSettingTab extends PluginSettingTab {
 	plugin: ClaudeChatPlugin;
@@ -15,152 +37,147 @@ export class ClaudeChatSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	// No top heading: Obsidian already renders the plugin name as the tab
+	// title, and a single-section tab needs no extra heading.
+	getSettingDefinitions(): SettingDefinitionItem[] {
+		return [
+			{
+				name: "Server URL",
+				desc: "ws:// address of the Claude SDK server on your tailnet, including port.",
+				control: { type: "text", key: "serverUrl", placeholder: "ws://host.tailnet.ts.net:8765" },
+			},
+			{
+				name: "Bearer token",
+				desc: "Must match OCC_TOKEN on the server.",
+				// Rendered by hand: the declarative text control cannot mask its input.
+				render: (setting) => {
+					setting.addText((text) => {
+						text.setPlaceholder("token")
+							.setValue(this.plugin.settings.token)
+							.onChange((value) => void this.setControlValue("token", value));
+						text.inputEl.type = "password";
+					});
+				},
+			},
+			{
+				name: "Default model",
+				desc: "Model used when starting a new session.",
+				control: { type: "dropdown", key: "defaultModel", options: MODEL_OPTIONS },
+			},
+			{
+				name: "Default reasoning level",
+				desc: "Reasoning effort for new sessions. A model that lacks a level uses the closest one it has (Haiku ignores it). Change it per-chat from the model menu.",
+				control: {
+					type: "dropdown",
+					key: "defaultEffort",
+					options: EFFORT_OPTIONS,
+				},
+			},
+			{
+				name: "Default mode",
+				desc: "Permission mode applied to new sessions. Change it per-chat from the toolbar mode picker.",
+				control: { type: "dropdown", key: "defaultPermissionMode", options: PERMISSION_MODE_OPTIONS },
+			},
+			{
+				name: "Auto-reconnect",
+				desc: "Reconnect automatically when the connection drops.",
+				control: { type: "toggle", key: "autoReconnect" },
+			},
+			{
+				name: "Reconnect delay (ms)",
+				desc: "Base backoff between reconnect attempts.",
+				control: {
+					type: "number",
+					key: "reconnectDelayMs",
+					placeholder: "1500",
+					min: MIN_RECONNECT_DELAY_MS,
+					validate: (value) => (value >= MIN_RECONNECT_DELAY_MS ? undefined : `Enter at least ${MIN_RECONNECT_DELAY_MS}.`),
+				},
+			},
+			{
+				name: "Keyboard debug panel",
+				desc: "Show a 'Copy KB' button that copies an on-screen-keyboard layout report to the clipboard. For diagnosing mobile keyboard/layout issues. Reopen the chat view after changing.",
+				control: { type: "toggle", key: "debugKeyboardPanel" },
+			},
+			{
+				name: "Export folder",
+				desc: "Vault folder conversation exports are written to.",
+				control: { type: "text", key: "exportFolder", placeholder: "Claude Conversations" },
+			},
+			{
+				name: "Group exports by month",
+				desc: "File exports into YYYY-MM subfolders under the export folder.",
+				control: { type: "toggle", key: "exportGroupByMonth" },
+			},
+			{
+				name: "Connection debug panel",
+				desc: "Show a small on-screen widget that records connection events (foreground/reconnect/attach/server errors). Copy sends the log to the clipboard; Mark inserts a section marker. For diagnosing connection issues like 'No such session' on foregrounding.",
+				control: { type: "toggle", key: "debugConnectionPanel" },
+			},
+		];
+	}
+
+	getControlValue(key: string): unknown {
+		return (this.plugin.settings as unknown as Record<string, unknown>)[key];
+	}
+
+	async setControlValue(key: string, value: unknown): Promise<void> {
+		const settings = this.plugin.settings as unknown as Record<string, unknown>;
+		settings[key] = typeof value === "string" && TRIMMED_KEYS.has(key) ? value.trim() : value;
+		await this.plugin.saveSettings();
+		if (key === "serverUrl" || key === "token") this.plugin.refreshConnections();
+		if (key === "debugConnectionPanel") this.plugin.refreshConnDebugPanels();
+	}
+
+	/** Fallback renderer for Obsidian versions before 1.13 (see class doc). */
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+		for (const def of this.getSettingDefinitions()) {
+			if (!isRow(def)) continue;
+			const setting = new Setting(containerEl).setName(def.name);
+			if (typeof def.desc === "string") setting.setDesc(def.desc);
+			if (def.control) this.renderControl(setting, def.control);
+			else if (def.render) (def.render as (setting: Setting) => void)(setting);
+		}
+	}
 
-		// No top heading: Obsidian already renders the plugin name as the tab
-		// title, and a single-section tab needs no extra heading.
-		new Setting(containerEl)
-			.setName("Server URL")
-			.setDesc("ws:// address of the Claude SDK server on your tailnet, including port.")
-			.addText((text) =>
-				text
-					.setPlaceholder("ws://host.tailnet.ts.net:8765")
-					.setValue(this.plugin.settings.serverUrl)
-					.onChange(async (value) => {
-						this.plugin.settings.serverUrl = value.trim();
-						await this.plugin.saveSettings();
-						this.plugin.refreshConnections();
-					})
-			);
-
-		new Setting(containerEl)
-			.setName("Bearer token")
-			.setDesc("Must match OCC_TOKEN on the server.")
-			.addText((text) => {
-				text.setPlaceholder("token")
-					.setValue(this.plugin.settings.token)
-					.onChange(async (value) => {
-						this.plugin.settings.token = value;
-						await this.plugin.saveSettings();
-						this.plugin.refreshConnections();
-					});
-				text.inputEl.type = "password";
-			});
-
-		new Setting(containerEl)
-			.setName("Default model")
-			.setDesc("Model used when starting a new session.")
-			.addDropdown((dropdown) => {
-				for (const [value, label] of Object.entries(MODEL_OPTIONS)) dropdown.addOption(value, label);
-				dropdown.setValue(this.plugin.settings.defaultModel).onChange(async (value) => {
-					this.plugin.settings.defaultModel = value;
-					await this.plugin.saveSettings();
+	private renderControl(setting: Setting, control: SettingControl): void {
+		const key = control.key;
+		const value = this.getControlValue(key);
+		switch (control.type) {
+			case "text":
+				setting.addText((text) =>
+					text
+						.setPlaceholder(control.placeholder ?? "")
+						.setValue(asText(value))
+						.onChange((v) => void this.setControlValue(key, v))
+				);
+				break;
+			case "dropdown":
+				setting.addDropdown((dropdown) => {
+					for (const [optionValue, label] of Object.entries(control.options)) dropdown.addOption(optionValue, label);
+					dropdown.setValue(asText(value)).onChange((v) => void this.setControlValue(key, v));
 				});
-			});
-
-		new Setting(containerEl)
-			.setName("Default reasoning level")
-			.setDesc(
-				"Reasoning effort for new sessions. A model that lacks a level uses the closest one it has (Haiku ignores it). Change it per-chat from the model menu."
-			)
-			.addDropdown((dropdown) => {
-				dropdown.addOption("default", EFFORT_DEFAULT_LABEL);
-				for (const level of EFFORT_LEVELS) dropdown.addOption(level, EFFORT_LABELS[level]);
-				dropdown.setValue(this.plugin.settings.defaultEffort).onChange(async (value) => {
-					this.plugin.settings.defaultEffort = value as EffortSetting;
-					await this.plugin.saveSettings();
-				});
-			});
-
-		new Setting(containerEl)
-			.setName("Default mode")
-			.setDesc("Permission mode applied to new sessions. Change it per-chat from the toolbar mode picker.")
-			.addDropdown((dropdown) => {
-				for (const [value, label] of Object.entries(PERMISSION_MODE_OPTIONS)) dropdown.addOption(value, label);
-				dropdown
-					.setValue(this.plugin.settings.defaultPermissionMode)
-					.onChange(async (value) => {
-						this.plugin.settings.defaultPermissionMode = value as PermissionMode;
-						await this.plugin.saveSettings();
-					});
-			});
-
-		new Setting(containerEl)
-			.setName("Auto-reconnect")
-			.setDesc("Reconnect automatically when the connection drops.")
-			.addToggle((toggle) =>
-				toggle.setValue(this.plugin.settings.autoReconnect).onChange(async (value) => {
-					this.plugin.settings.autoReconnect = value;
-					await this.plugin.saveSettings();
-				})
-			);
-
-		new Setting(containerEl)
-			.setName("Reconnect delay (ms)")
-			.setDesc("Base backoff between reconnect attempts.")
-			.addText((text) =>
-				text
-					.setPlaceholder("1500")
-					.setValue(String(this.plugin.settings.reconnectDelayMs))
-					.onChange(async (value) => {
-						const n = parseInt(value, 10);
-						const valid = !Number.isNaN(n) && n >= 100;
-						if (valid) {
-							this.plugin.settings.reconnectDelayMs = n;
-							await this.plugin.saveSettings();
-						}
-						text.inputEl.toggleClass("occ-input-invalid", !valid);
-					})
-			);
-
-		new Setting(containerEl)
-			.setName("Keyboard debug panel")
-			.setDesc(
-				"Show a 'Copy KB' button that copies an on-screen-keyboard layout report to the clipboard. For diagnosing mobile keyboard/layout issues. Reopen the chat view after changing."
-			)
-			.addToggle((toggle) =>
-				toggle.setValue(this.plugin.settings.debugKeyboardPanel).onChange(async (value) => {
-					this.plugin.settings.debugKeyboardPanel = value;
-					await this.plugin.saveSettings();
-				})
-			);
-
-		new Setting(containerEl)
-			.setName("Export folder")
-			.setDesc("Vault folder conversation exports are written to.")
-			.addText((text) =>
-				text
-					.setPlaceholder("Claude Conversations")
-					.setValue(this.plugin.settings.exportFolder)
-					.onChange(async (value) => {
-						this.plugin.settings.exportFolder = value.trim();
-						await this.plugin.saveSettings();
-					})
-			);
-
-		new Setting(containerEl)
-			.setName("Group exports by month")
-			.setDesc("File exports into YYYY-MM subfolders under the export folder.")
-			.addToggle((toggle) =>
-				toggle.setValue(this.plugin.settings.exportGroupByMonth).onChange(async (value) => {
-					this.plugin.settings.exportGroupByMonth = value;
-					await this.plugin.saveSettings();
-				})
-			);
-
-		new Setting(containerEl)
-			.setName("Connection debug panel")
-			.setDesc(
-				"Show a small on-screen widget that records connection events (foreground/reconnect/attach/server errors). Copy sends the log to the clipboard; Mark inserts a section marker. For diagnosing connection issues like 'No such session' on foregrounding."
-			)
-			.addToggle((toggle) =>
-				toggle.setValue(this.plugin.settings.debugConnectionPanel).onChange(async (value) => {
-					this.plugin.settings.debugConnectionPanel = value;
-					await this.plugin.saveSettings();
-					this.plugin.refreshConnDebugPanels();
-				})
-			);
+				break;
+			case "toggle":
+				setting.addToggle((toggle) => toggle.setValue(Boolean(value)).onChange((v) => void this.setControlValue(key, v)));
+				break;
+			case "number":
+				setting.addText((text) =>
+					text
+						.setPlaceholder(control.placeholder ?? "")
+						.setValue(asText(value))
+						.onChange(async (raw) => {
+							const n = parseInt(raw, 10);
+							const valid = !Number.isNaN(n) && !(await control.validate?.(n));
+							if (valid) await this.setControlValue(key, n);
+							text.inputEl.toggleClass("occ-input-invalid", !valid);
+						})
+				);
+				break;
+			default:
+				break; // control types this tab does not define
+		}
 	}
 }

@@ -6,6 +6,34 @@ Each entry is ≤200 words (longer when a hard-won investigation is worth preser
 
 ---
 
+## TDL-20261117-001: Settings tab defined once, rendered natively on 1.13+ and by `display()` before
+
+**Date:** 2026-11-17
+**Status:** Implemented
+
+**Context:** `eslint-plugin-obsidianmd` flags a `PluginSettingTab` without
+`getSettingDefinitions()`: on Obsidian 1.13+ its settings are missing from
+settings search. Our `minAppVersion` is 1.4.0 and mobile users lag on app
+versions, so raising it was rejected.
+
+**Verified API facts (obsidian 1.13.1 typings):** `display()` is not called when
+`getSettingDefinitions()` returns a non-empty array; older versions never call
+`getSettingDefinitions()`. There is no password-masked text control, so the
+bearer token row uses the `render` escape hatch (`type=password` kept).
+
+**Decision:** `settings.ts` holds one definitions list. 1.13+ renders it itself;
+`display()` is a small legacy renderer over the same list, with
+`getControlValue`/`setControlValue` overridden (they must exist on the class for
+old versions) and carrying the side effects (trim, reconnect, debug panels).
+Rejected: two hand-written copies (drift) and bumping `minAppVersion`.
+
+**Unverified:** the 1.13+ native path was exercised only through typings and
+unit tests, not in a real Obsidian 1.13. Check the settings tab there.
+
+**Files:** `plugin/src/settings.ts`, `plugin/tests/settings.test.ts`.
+
+---
+
 ## TDL-20260930-001: Reasoning level — static per-family table, live-changeable via `effortLevel`
 
 **Date:** 2026-09-30

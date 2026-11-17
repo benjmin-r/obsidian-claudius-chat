@@ -233,10 +233,10 @@ export class ChatView extends ItemView {
 		// silently killed the socket (and suspended our reconnect timers). Force a
 		// reconnect on visibility/focus if we're no longer connected.
 		const recover = (src: string) => (): void => {
-			this.dlog?.log("view", `${src} hidden=${document.hidden} connected=${this.client?.isConnected() ?? false}`);
-			if (!document.hidden) this.client?.checkAlive();
+			this.dlog?.log("view", `${src} hidden=${activeDocument.hidden} connected=${this.client?.isConnected() ?? false}`);
+			if (!activeDocument.hidden) this.client?.checkAlive();
 		};
-		this.registerDomEvent(document, "visibilitychange", recover("visibilitychange"));
+		this.registerDomEvent(activeDocument, "visibilitychange", recover("visibilitychange"));
 		this.registerDomEvent(window, "focus", recover("focus"));
 		this.registerDomEvent(window, "online", recover("online"));
 
@@ -528,7 +528,7 @@ export class ChatView extends ItemView {
 			this.registerDomEvent(window as Window, ev as keyof WindowEventMap, rec(ev) as EventListener);
 		}
 
-		const btn = document.body.createEl("button", { text: "Copy KB" });
+		const btn = activeDocument.body.createEl("button", { text: "Copy KB" });
 		this.kbDebugEl = btn;
 		btn.style.position = "fixed";
 		// Top-right, offset down: clears the iPad status bar/clock (which hid the
@@ -576,7 +576,7 @@ export class ChatView extends ItemView {
 		// (visualViewport is inert on iOS, so it can't tell us this).
 		const visBottom = window.innerHeight - this.kbLastHeight;
 		const behind = comp && comp.bottom > visBottom + 1 ? "BEHIND-KB" : "visible";
-		const focused = document.activeElement === this.inputEl ? "F" : "-";
+		const focused = activeDocument.activeElement === this.inputEl ? "F" : "-";
 		// Which keyboard layout is active (iPhone uses occ-kb-open, iPad occ-kb-tablet).
 		const layout = cc.hasClass("occ-kb-open") ? "open" : cc.hasClass("occ-kb-tablet") ? "tablet" : "none";
 		const line =
@@ -592,7 +592,7 @@ export class ChatView extends ItemView {
 	private kbReport(): string {
 		const vv = window.visualViewport;
 		// Read env(safe-area-inset-*) via a probe (can't be read off the document directly).
-		const probe = document.body.createDiv();
+		const probe = activeDocument.body.createDiv();
 		probe.style.position = "fixed";
 		probe.style.bottom = "0";
 		probe.style.paddingBottom = "env(safe-area-inset-bottom, 0px)";
@@ -604,8 +604,8 @@ export class ChatView extends ItemView {
 			`=== OSK debug (${this.kbElapsed()}) ===`,
 			`win inner ${window.innerWidth}x${window.innerHeight} outer ${window.outerWidth}x${window.outerHeight}`,
 			`screen ${screen.width}x${screen.height} avail ${screen.availWidth}x${screen.availHeight}`,
-			`docEl.client h=${document.documentElement.clientHeight} vv.scale=${vv?.scale ?? "—"}`,
-			`safe-area top=${safeTop} bottom=${safeBottom} | body.clientH=${document.body.clientHeight}`,
+			`docEl.client h=${activeDocument.documentElement.clientHeight} vv.scale=${vv?.scale ?? "—"}`,
+			`safe-area top=${safeTop} bottom=${safeBottom} | body.clientH=${activeDocument.body.clientHeight}`,
 			`KB events: ${this.kbLog.join("  ") || "(NONE fired)"}`,
 			"",
 			"snapshots (oldest→newest):",
@@ -620,7 +620,7 @@ export class ChatView extends ItemView {
 	 * shown, to stay out of the way. Gated behind the debugConnectionPanel setting.
 	 */
 	private mountConnDebug(): void {
-		const panel = document.body.createDiv();
+		const panel = activeDocument.body.createDiv();
 		this.connDebugEl = panel;
 		Object.assign(panel.style, {
 			position: "fixed",
@@ -919,7 +919,7 @@ export class ChatView extends ItemView {
 		}
 		if (event.type === "error") new Notice(`Claude: ${event.message}`, 5000);
 		// Alert when a turn finishes while the app isn't visible.
-		if (event.type === "done" && document.hidden) new Notice("Claude finished responding", 5000);
+		if (event.type === "done" && activeDocument.hidden) new Notice("Claude finished responding", 5000);
 		this.render();
 		// Resolve a pending deep-link at stable points (after replay / each older page),
 		// where hasOlderHistory is accurate and the DOM reflects the latest transcript.
@@ -1003,7 +1003,7 @@ export class ChatView extends ItemView {
 		const pin = (): void => {
 			if (this.stickBottom) this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
 		};
-		requestAnimationFrame(pin);
+		window.requestAnimationFrame(pin);
 		window.setTimeout(pin, 60);
 		window.setTimeout(pin, 250);
 	}

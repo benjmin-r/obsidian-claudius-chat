@@ -56,7 +56,7 @@ export function fetchSessions(url: string, token: string, timeoutMs = 6000): Pro
 		const finish = (fn: () => void): void => {
 			if (settled) return;
 			settled = true;
-			clearTimeout(timer);
+			window.clearTimeout(timer);
 			try {
 				ws.close();
 			} catch {
@@ -64,7 +64,7 @@ export function fetchSessions(url: string, token: string, timeoutMs = 6000): Pro
 			}
 			fn();
 		};
-		const timer = setTimeout(() => finish(() => reject(new Error("Timed out fetching sessions."))), timeoutMs);
+		const timer = window.setTimeout(() => finish(() => reject(new Error("Timed out fetching sessions."))), timeoutMs);
 		ws.onopen = () => ws.send(JSON.stringify({ type: "hello", token }));
 		ws.onerror = () => finish(() => reject(new Error("Couldn't reach the Claude server.")));
 		ws.onmessage = (ev) => {
