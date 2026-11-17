@@ -94,7 +94,7 @@ export class BridgeClient {
 		// user has to fix the server URL in settings first, so retrying is pointless noise.
 		if (!this.opts.url.trim()) {
 			this.opts.onStateChange("disconnected");
-			this.opts.onEvent({ type: "error", message: "No server URL configured — set it in the Claude Chat settings." });
+			this.opts.onEvent({ type: "error", message: "No server URL configured — set it in the Claudius Chat settings." });
 			return;
 		}
 		this.opts.onStateChange("connecting");
@@ -103,7 +103,7 @@ export class BridgeClient {
 			ws = this.opts.createSocket(this.opts.url);
 		} catch {
 			this.opts.onStateChange("disconnected");
-			this.opts.onEvent({ type: "error", message: `Invalid server URL — check it in the Claude Chat settings: ${this.opts.url}` });
+			this.opts.onEvent({ type: "error", message: `Invalid server URL — check it in the Claudius Chat settings: ${this.opts.url}` });
 			return;
 		}
 		this.ws = ws;
@@ -237,7 +237,7 @@ export class BridgeClient {
 	send(msg: ClientMessage): boolean {
 		if (!this.ws || this.ws.readyState !== OPEN) {
 			this.dbg(`send blocked (not open): ${msg.type}`);
-			this.opts.onEvent({ type: "error", message: "Not connected to the Claude server." });
+			this.opts.onEvent({ type: "error", message: "Not connected to the Claudius Chat server." });
 			return false;
 		}
 		this.ws.send(JSON.stringify(msg));
@@ -288,7 +288,7 @@ export class BridgeClient {
 			// Retrying with the same token can never succeed, so stop (see onClose) and tell
 			// the user what to fix instead of looping silently.
 			this.authFailed = true;
-			this.opts.onEvent({ type: "error", code: "invalid_token", message: "Invalid token — check the bearer token in the Claude Chat settings." });
+			this.opts.onEvent({ type: "error", code: "invalid_token", message: "Invalid token — check the bearer token in the Claudius Chat settings." });
 			return;
 		}
 		this.opts.onEvent(parsed as BridgeEvent);

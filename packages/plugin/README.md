@@ -1,6 +1,6 @@
-# Claude Chat (Obsidian plugin)
+# Claudius Chat (Obsidian plugin)
 
-The Obsidian half of [Claude Chat](../../README.md): a structured Claude chat in
+The Obsidian half of [Claudius Chat](../../README.md): a structured Claude chat in
 a sidebar, backed by a self-hosted Claude Agent SDK server reached over Tailscale.
 
 This plugin is **only the view**. It does not run Claude itself — it connects to
@@ -18,7 +18,7 @@ Copy the build artifacts into your vault:
   styles.css
 ```
 
-Enable **Claude Chat** under *Settings → Community plugins*.
+Enable **Claudius Chat** under *Settings → Community plugins*.
 
 ## Settings (shown on all platforms, including mobile)
 

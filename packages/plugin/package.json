@@ -1,7 +1,7 @@
 {
 	"name": "@occ/plugin",
 	"version": "0.1.0",
-	"description": "Obsidian plugin: a structured Claude chat sidebar backed by the Agent SDK server over Tailscale.",
+	"description": "Obsidian plugin: a structured Claude chat sidebar backed by the Claudius server over Tailscale.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",

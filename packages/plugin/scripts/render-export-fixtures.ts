@@ -14,7 +14,7 @@ import { renderMarkdown } from "../src/export-markdown";
 import { scenarios } from "../tests/fixtures/export-fixtures";
 
 const VAULT_ROOT = path.join(os.homedir(), "vaults", "benjamin");
-const EXPORT_FOLDER = "Claude Conversations";
+const EXPORT_FOLDER = "Claudius Conversations";
 
 async function writeSample(meta: ExportMeta, content: string): Promise<void> {
 	// Filename date is the session's start (first message), not last activity — see export-shared.ts.

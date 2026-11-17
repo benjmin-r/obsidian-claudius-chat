@@ -4,6 +4,13 @@ This file tracks significant technical decisions made during development, using 
 simplified ADR format. Entries are in reverse chronological order (newest first).
 Each entry is ≤200 words (longer when a hard-won investigation is worth preserving).
 
+> Naming: the project was renamed from "Claude Chat" (plugin id `claude-chat`) to
+> "Claudius Chat" (`claudius-chat`) in TDL-20261117-002. Entries below keep the
+> names that were current when they were written. OCC, now read as "Obsidian
+> Claudius Chat", is unchanged.
+
+---
+
 ## TDL-20261117-003: Obsidian's official linter in the repo and CI; minAppVersion verified
 
 **Date:** 2026-11-17
@@ -30,6 +37,41 @@ it, so it is safe on 1.4.0. Do not trust `@since` alone.
 **Files:** `eslint.config.mjs`, `package.json`, `package-lock.json`, `.github/workflows/ci.yml`.
 
 ---
+
+## TDL-20261117-002: Rename Claude Chat to Claudius Chat (plugin id `claudius-chat`)
+
+**Date:** 2026-11-17
+**Status:** Implemented
+
+**Context:** a distinct name that keeps the OCC shorthand (now "Obsidian Claudius
+Chat") and avoids sounding like a Claude product. The directory forbids
+"obsidian" in a plugin id or name, so the repo is `obsidian-claudius-chat` while
+the plugin is id `claudius-chat`, name "Claudius Chat". Checked free in the
+community directory (10,509 plugins) on 2026-11-17; two similarly named GitHub
+projects exist but are not in the directory. No tag or submission exists yet, so
+this is the cheapest moment to change the id.
+
+**Decision:** rename the product name, plugin id, repo, TypeScript identifiers
+(`ClaudiusChat*`, `VIEW_TYPE_CLAUDIUS_CHAT`) and user-visible product strings.
+Unchanged on purpose: everything `occ-*`/`OCC_*`/`@occ/*`; the
+`obsidian://occ-chat` scheme (saved links); "Claude" where it means the model
+("Message Claude", the `**Claude**` export label, "New Claude session"); the
+local clone directory name. The default export folder is "Claudius Conversations"
+(the plugin writes it, so it carries the plugin's name).
+The view-type string became `claudius-chat-view` (pre-0.1, no compatibility
+needed). Command ids became `open-chat` and `open-chat-tab` (full ids change
+prefix with the plugin id anyway, and ids must not embed the plugin id).
+Naming rule for copy and identifiers: AGENTS.md, "Naming: Claude vs Claudius".
+
+**Consequences:** the plugin folder, `data.json` (URL, token) and the enabled
+list are keyed by plugin id: each vault's `plugins/claude-chat/` must be moved to
+`plugins/claudius-chat/`, never recreated empty, or settings reset to defaults.
+Each device's saved layout shows a blank chat tab once (old view type), and user
+hotkeys and command bindings on `claude-chat:*` must be re-bound. BRAT
+installs must be re-added under the new repo path. No server or protocol change,
+so no server restart.
+
+**Files:** `manifest.json`, `plugin/src/*`, `package.json`, docs.
 
 ---
 

@@ -29,7 +29,7 @@ EnvironmentFile=/home/USER/.config/occ-server.env
 # SECURITY: ANTHROPIC_API_KEY is intentionally NOT set. If it were set the SDK
 # would switch from the subscription to metered API billing. Do not add it.
 
-ExecStart=/usr/bin/env node /home/USER/projects/obsidian-claude-chat/packages/server/dist/index.js
+ExecStart=/usr/bin/env node /home/USER/projects/obsidian-claudius-chat/packages/server/dist/index.js
 
 Restart=always
 RestartSec=2

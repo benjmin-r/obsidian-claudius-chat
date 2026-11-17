@@ -1,6 +1,6 @@
 {
-	"id": "claude-chat",
-	"name": "Claude Chat",
+	"id": "claudius-chat",
+	"name": "Claudius Chat",
 	"version": "0.1.0",
 	"minAppVersion": "1.4.0",
 	"description": "Chat with Claude in a structured sidebar, backed by a self-hosted Claude Agent SDK server reached over Tailscale.",

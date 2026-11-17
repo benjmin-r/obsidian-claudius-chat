@@ -1,4 +1,4 @@
-# Claude Chat for Obsidian
+# Claudius Chat for Obsidian
 
 A **structured** Claude chat inside Obsidian — markdown bubbles, streamed
 text/thinking, tool & todo display, and **auto-apply-edits / confirm-only-deletes**
@@ -46,7 +46,7 @@ Anthropic; it is used here only to describe what the plugin connects to.
 ```
  Obsidian (desktop / mobile)            always-on host
  ┌───────────────────────┐   ws://     ┌─────────────────────────────┐
- │  Claude Chat plugin    │ ─────────▶  │  SDK server  ──▶  query()    │
+ │  Claudius Chat plugin    │ ─────────▶  │  SDK server  ──▶  query()    │
  │  (sidebar view)        │  tailnet    │  (owns sessions)  Agent SDK  │
  └───────────────────────┘   +token    └─────────────────────────────┘
         vault (file sync) ⇄ … ⇄ vault on the host
@@ -115,8 +115,8 @@ Copy the three build artifacts into your vault's plugin folder:
   styles.css     (packages/plugin/styles.css)
 ```
 
-Enable **Claude Chat** in *Settings → Community plugins*, then open
-*Settings → Claude Chat* and set:
+Enable **Claudius Chat** in *Settings → Community plugins*, then open
+*Settings → Claudius Chat* and set:
 - **Server URL** — `ws://<host>.<tailnet>.ts.net:8765` (or the Tailscale IP)
 - **Bearer token** — the same `OCC_TOKEN` as the server
 - **Default model** — defaults to Sonnet 5.5
@@ -235,7 +235,7 @@ git push origin 0.1.0
 The workflow verifies the tag matches the manifest version, then creates the
 release. **Mobile install via BRAT:** in Obsidian (works on iOS/Android), install
 the *BRAT* community plugin, "Add beta plugin", and enter this repo
-(`benjmin-r/obsidian-claude-chat`) — BRAT pulls the assets from the latest release.
+(`benjmin-r/obsidian-claudius-chat`) — BRAT pulls the assets from the latest release.
 `.github/workflows/ci.yml` runs the test suites + build on every push/PR.
 
 ## License

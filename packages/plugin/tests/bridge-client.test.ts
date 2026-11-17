@@ -141,7 +141,7 @@ describe("BridgeClient", () => {
 	it("refuses to send when not connected", () => {
 		const h = makeClient();
 		expect(h.client.userMessage("s", "hi")).toBeUndefined();
-		expect(h.events).toContainEqual({ type: "error", message: "Not connected to the Claude server." });
+		expect(h.events).toContainEqual({ type: "error", message: "Not connected to the Claudius Chat server." });
 	});
 
 	it("sends typed frames when connected", () => {
@@ -318,7 +318,7 @@ describe("BridgeClient", () => {
 		expect(h.states).toEqual(["disconnected"]); // no "connecting"
 		expect(h.events).toContainEqual({
 			type: "error",
-			message: "No server URL configured — set it in the Claude Chat settings.",
+			message: "No server URL configured — set it in the Claudius Chat settings.",
 		});
 		expect(h.scheduled).toHaveLength(0); // no reconnect — user must fix settings
 	});
@@ -343,7 +343,7 @@ describe("BridgeClient", () => {
 		h.last().deliver({ type: "error", code: "invalid_token", message: "Invalid token." });
 		h.last().close(); // the server closes the socket after rejecting
 		expect(h.events).toEqual([
-			{ type: "error", code: "invalid_token", message: "Invalid token — check the bearer token in the Claude Chat settings." },
+			{ type: "error", code: "invalid_token", message: "Invalid token — check the bearer token in the Claudius Chat settings." },
 		]);
 		expect(h.states[h.states.length - 1]).toBe("disconnected");
 		// Heartbeat timers share the scheduler; only a reconnect (the 1000ms base delay) is a retry.

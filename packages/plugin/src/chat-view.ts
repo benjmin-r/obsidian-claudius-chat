@@ -1,6 +1,6 @@
 import { App, ItemView, MarkdownRenderer, Menu, Modal, normalizePath, Notice, Platform, setIcon, type WorkspaceLeaf } from "obsidian";
 import { clampEffort, supportedEffortLevels, type BridgeEvent, type EffortLevel, type PermissionMode, type RenderEvent, type SessionSummary } from "@occ/protocol";
-import type ClaudeChatPlugin from "./main";
+import type ClaudiusChatPlugin from "./main";
 import { BridgeClient, type WsLike } from "./bridge-client";
 import { DebugLog } from "./debug-log";
 import { FileSuggest } from "./file-suggest";
@@ -23,7 +23,7 @@ import {
 	type ToolEntry,
 } from "./view-model";
 
-export const VIEW_TYPE_CLAUDE_CHAT = "claude-chat-view";
+export const VIEW_TYPE_CLAUDIUS_CHAT = "claudius-chat-view";
 
 /** After this long without a successful refresh, the session list is flagged stale. */
 const STALE_AFTER_MS = 60_000;
@@ -147,7 +147,7 @@ export class ChatView extends ItemView {
 
 	constructor(
 		leaf: WorkspaceLeaf,
-		private readonly plugin: ClaudeChatPlugin
+		private readonly plugin: ClaudiusChatPlugin
 	) {
 		super(leaf);
 		this.selectedModel = plugin.settings.defaultModel;
@@ -157,7 +157,7 @@ export class ChatView extends ItemView {
 	}
 
 	getViewType(): string {
-		return VIEW_TYPE_CLAUDE_CHAT;
+		return VIEW_TYPE_CLAUDIUS_CHAT;
 	}
 
 	getDisplayText(): string {
@@ -900,7 +900,7 @@ export class ChatView extends ItemView {
 				if (want && !event.effort) this.client.setEffort(event.sessionId, want);
 			}
 		}
-		if (event.type === "error") new Notice(`Claude: ${event.message}`, 5000);
+		if (event.type === "error") new Notice(`Claudius Chat: ${event.message}`, 5000);
 		// Alert when a turn finishes while the app isn't visible.
 		if (event.type === "done" && activeDocument.hidden) new Notice("Claude finished responding", 5000);
 		this.render();

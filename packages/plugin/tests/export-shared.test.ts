@@ -28,13 +28,13 @@ describe("exportFilePath", () => {
 	const updatedAt = Date.parse("2026-08-18T08:41:01.332Z");
 
 	it("builds a date-led path without month grouping", () => {
-		expect(exportFilePath("Claude Conversations", false, "My Chat", updatedAt, "md")).toBe(
-			"Claude Conversations/20260818 - My Chat.md"
+		expect(exportFilePath("Claudius Conversations", false, "My Chat", updatedAt, "md")).toBe(
+			"Claudius Conversations/20260818 - My Chat.md"
 		);
 	});
 	it("groups by YYYY-MM when requested", () => {
-		expect(exportFilePath("Claude Conversations", true, "My Chat", updatedAt, "html")).toBe(
-			"Claude Conversations/2026-08/20260818 - My Chat.html"
+		expect(exportFilePath("Claudius Conversations", true, "My Chat", updatedAt, "html")).toBe(
+			"Claudius Conversations/2026-08/20260818 - My Chat.html"
 		);
 	});
 	it("is deterministic for the same inputs", () => {

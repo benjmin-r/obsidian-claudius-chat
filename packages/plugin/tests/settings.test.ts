@@ -1,8 +1,8 @@
 import { App, type SettingDefinition } from "obsidian";
-import { ClaudeChatSettingTab } from "../src/settings";
-import { DEFAULT_SETTINGS, effortFromSetting, type ClaudeChatSettings } from "../src/settings-types";
+import { ClaudiusChatSettingTab } from "../src/settings";
+import { DEFAULT_SETTINGS, effortFromSetting, type ClaudiusChatSettings } from "../src/settings-types";
 
-function fakePlugin(settings: ClaudeChatSettings = { ...DEFAULT_SETTINGS }) {
+function fakePlugin(settings: ClaudiusChatSettings = { ...DEFAULT_SETTINGS }) {
 	return {
 		app: new App(),
 		settings,
@@ -33,11 +33,11 @@ describe("effortFromSetting", () => {
 	});
 });
 
-describe("ClaudeChatSettingTab", () => {
+describe("ClaudiusChatSettingTab", () => {
 	it("renders all fields including a password-masked token", () => {
 		const plugin = fakePlugin();
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const tab = new ClaudeChatSettingTab(plugin.app, plugin as any);
+		const tab = new ClaudiusChatSettingTab(plugin.app, plugin as any);
 		tab.display();
 		const inputs = tab.containerEl.querySelectorAll("input");
 		const selects = tab.containerEl.querySelectorAll("select");
@@ -49,7 +49,7 @@ describe("ClaudeChatSettingTab", () => {
 	it("persists edits via saveSettings", async () => {
 		const plugin = fakePlugin();
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const tab = new ClaudeChatSettingTab(plugin.app, plugin as any);
+		const tab = new ClaudiusChatSettingTab(plugin.app, plugin as any);
 		tab.display();
 		const urlInput = tab.containerEl.querySelector("input") as HTMLInputElement;
 		urlInput.value = "ws://other:9000";
@@ -62,7 +62,7 @@ describe("ClaudeChatSettingTab", () => {
 	it("re-points open views when the server URL or token changes", async () => {
 		const plugin = fakePlugin();
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const tab = new ClaudeChatSettingTab(plugin.app, plugin as any);
+		const tab = new ClaudiusChatSettingTab(plugin.app, plugin as any);
 		tab.display();
 		const urlInput = tab.containerEl.querySelector("input") as HTMLInputElement;
 		urlInput.value = "ws://other:9000";
@@ -78,20 +78,20 @@ describe("ClaudeChatSettingTab", () => {
 	});
 });
 
-describe("ClaudeChatSettingTab definitions (Obsidian 1.13+)", () => {
-	function makeTab(settings?: ClaudeChatSettings) {
+describe("ClaudiusChatSettingTab definitions (Obsidian 1.13+)", () => {
+	function makeTab(settings?: ClaudiusChatSettings) {
 		const plugin = fakePlugin(settings);
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const tab = new ClaudeChatSettingTab(plugin.app, plugin as any);
+		const tab = new ClaudiusChatSettingTab(plugin.app, plugin as any);
 		return { plugin, tab };
 	}
 
 	/** Every row (control or render) across all groups, in order. */
-	function rows(tab: ClaudeChatSettingTab): SettingDefinition[] {
+	function rows(tab: ClaudiusChatSettingTab): SettingDefinition[] {
 		return tab.getSettingDefinitions().flatMap((d) => ("items" in d ? (d.items ?? []) : [d])) as SettingDefinition[];
 	}
 
-	function controlKeys(tab: ClaudeChatSettingTab): string[] {
+	function controlKeys(tab: ClaudiusChatSettingTab): string[] {
 		return rows(tab).flatMap((d) => ("control" in d && d.control ? [d.control.key] : []));
 	}
 
@@ -153,11 +153,11 @@ describe("ClaudeChatSettingTab definitions (Obsidian 1.13+)", () => {
 	});
 });
 
-describe("ClaudeChatSettingTab legacy display() (Obsidian before 1.13)", () => {
-	function render(settings?: ClaudeChatSettings) {
+describe("ClaudiusChatSettingTab legacy display() (Obsidian before 1.13)", () => {
+	function render(settings?: ClaudiusChatSettings) {
 		const plugin = fakePlugin(settings);
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const tab = new ClaudeChatSettingTab(plugin.app, plugin as any);
+		const tab = new ClaudiusChatSettingTab(plugin.app, plugin as any);
 		tab.display();
 		return { plugin, tab };
 	}
@@ -210,11 +210,11 @@ describe("ClaudeChatSettingTab legacy display() (Obsidian before 1.13)", () => {
 	});
 });
 
-describe("ClaudeChatSettingTab grouping", () => {
+describe("ClaudiusChatSettingTab grouping", () => {
 	function groups() {
 		const plugin = fakePlugin();
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const tab = new ClaudeChatSettingTab(plugin.app, plugin as any);
+		const tab = new ClaudiusChatSettingTab(plugin.app, plugin as any);
 		return tab.getSettingDefinitions().flatMap((d) => ("items" in d ? [d] : []));
 	}
 
