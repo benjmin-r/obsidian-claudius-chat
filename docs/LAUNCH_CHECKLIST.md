@@ -18,7 +18,9 @@ The docs moved: the old `Plugins/Releasing/Submission+requirements` and
 - Release with GitHub Actions: https://docs.obsidian.md/Plugins/Releasing/Release+your+plugin+with+GitHub+Actions
 - Community directory FAQ (automated review, Review branch): https://docs.obsidian.md/community-directory/faq
 - Submit/manage at https://community.obsidian.md (GitHub account must be linked)
-- Local linter: `eslint-plugin-obsidianmd` (the FAQ's recommended way to run the review checks locally)
+- Local linter: `eslint-plugin-obsidianmd` (the FAQ's recommended way to run the review checks locally).
+  The review runs an **older release** than the newest (0.5.0 on 2026-11-17, while 0.6.0 was
+  current), so a clean local run is not proof: see "Community review, first run" below.
 
 Key facts from those pages:
 
@@ -26,8 +28,10 @@ Key facts from those pages:
   reads `manifest.json` at HEAD of the **default branch**.
 - Release tag == manifest `version` (`x.y.z`, bare, no `v` shown in examples); assets
   `main.js`, `manifest.json`, optional `styles.css`. Release name is free-form.
-- Automated review runs on every version: Manifest, Releases, Source code, Build
-  verification (Error / Warning / Recommendation / Pass). The plugin cannot be installed
+- Automated review runs on every version: Manifest, Releases, Source code, CSS lint,
+  Dependencies, Build verification (Error / Warning / Recommendation / Pass). It lints
+  **every package in the repo** (server and protocol too), from a clean checkout with
+  nothing built. The plugin cannot be installed
   until errors are resolved; fix by publishing a higher version.
 - The scanner builds with the first of `build`, `build:plugin`, `compile` in package.json.
 - The management page has **Review branch** (scan a branch/tag/SHA without publishing).
@@ -47,8 +51,9 @@ Already satisfying Obsidian guidelines — no action:
 - No `innerHTML`/`outerHTML`, no sample placeholders (`MyPlugin`/`SampleSettingTab`),
   no telemetry, no self-updater, no ads, no obfuscation.
 - `manifest.name` ("Claudius Chat") contains neither "Obsidian" nor "Plugin";
-  `id` ("claudius-chat") doesn't contain "obsidian". Description is 100 chars (<=250)
-  and ends with a period.
+  `id` ("claudius-chat") doesn't contain "obsidian". The description must not contain
+  "Obsidian" either (a review rule that is not in the docs; found 2026-11-17); it is 141
+  chars (<=250) and ends with a period.
 - LICENSE present with clear MIT designation.
 
 Two real code fixes needed before store submission — both **DONE**:
@@ -81,8 +86,8 @@ Automated checks, all run against a clean clone where noted:
   carries it and the plugin does not. `tests/identity.test.ts` now pins id, name, view
   type, command ids and the `occ-chat` link scheme.
 - ✅ `npm run lint` (eslint-plugin-obsidianmd, the directory review's rules) is in the
-  repo and in CI: 0 findings. `minAppVersion` 1.4.0 verified with it (lowest clean
-  version; the true floor is 1.3.5, TDL-20261117-003).
+  repo and in CI. Superseded 2026-11-17 by the review's own run (next section):
+  `minAppVersion` is now 1.7.2 and the lint covers all packages (TDL-20261117-004).
 - ✅ `.github/dependabot.yml` (weekly npm and Actions updates) and `SECURITY.md` added.
   Maintainer step in the GitHub settings: enable **Private vulnerability reporting**
   (SECURITY.md points reporters at it) and **Dependabot alerts**.
@@ -124,6 +129,52 @@ added to the repo. Errors: 0 after the fixes below. The authoritative check rema
   declarative settings definitions, TDL-20261117-001). Linter: 0 errors, 0 warnings.
   Still to check by hand: the settings tab in a real Obsidian 1.13+ and in an older one.
 
+## Community review, first run (2026-11-17, Review branch) — fixed on `fix/community-review-findings`
+
+Result: 1 manifest error, 4 source errors, ~150 source warnings, 9 CSS warnings,
+dependencies pass. **The review's linter is not ours**: it is `eslint-plugin-obsidianmd`
+**0.5.0** (we had 0.6.0), over all packages, with nothing built. Reproduced locally by
+installing 0.5.0 next to the repo's and linting a clean checkout.
+
+| Finding | Cause | Fix |
+|---|---|---|
+| Manifest: "Obsidian" in description | undocumented review rule | reworded; `identity.test.ts` pins it |
+| `no-static-styles-assignment` (`chat-view.ts`) | 0.5.0 flags `style.height = ""` (0.5.1+ does not) | `style.removeProperty(...)` |
+| `no-unsupported-api` (`revealLeaf`, `main.ts`) | 0.5.0 uses the bare `@since 1.7.2` tag | `minAppVersion` 1.7.2 (manifest, versions.json) |
+| `eslint-disable no-console` (server) | directives that disable `no-console` are errors | removed; server logs via `src/log.ts` |
+| ~120 `no-unsafe-*`, redundant-type, "error type" | `@occ/protocol` types came from an unbuilt `dist/` | `types` points at source; server builds with `tsconfig.build.json` |
+| `no-console` warnings (server) | `console.log` | `log.ts` (stdout/stderr) |
+| `prefer-window-timers` (`index.ts`) | bare `setInterval` | `import { setInterval } from "node:timers"` (no `window` in Node) |
+| `unbound-method`, redundant assertion, `no-base-to-string` | real nits | fixed (`orphan-sweep.ts`, `sdk-adapter.ts`, `ws-transport.ts`, `map-sdk-events.ts`) |
+| CSS `!important` (9) | defeating base rules | 3 removed (`.occ-hidden`, `.occ-input-invalid`); see below |
+
+**Accepted warnings** (expect these in the next review; they do not block):
+
+- `no-nodejs-modules` for `node:fs|os|path|http` in `packages/server`. The server is a Node
+  program and is not part of `main.js` (checked: the bundle only requires `obsidian`).
+- `!important` on `.occ-toolbar svg` (icon size), `.occ-activity-header svg`, and
+  `.occ-chat.occ-kb-open { flex: none }`. They override Obsidian's own rules, and the last
+  one is the iPad keyboard fix. Removing them needs a device to verify.
+
+**Reproduce the review locally** (from the repo root, before every release):
+
+```bash
+npm run clean                                    # nothing built, like the reviewer
+npm i --no-save eslint-plugin-obsidianmd@0.5.0   # the review's version; check community.obsidian.md for a newer one
+npm run lint                                     # must print nothing
+npm ci                                           # restore the pinned linter, then lint again
+npm run lint
+```
+
+Still to do for this fix:
+
+- ⏳ Re-run **Review branch** on the fix branch; expect only the accepted warnings.
+- ⏳ By hand, on a device: the file-suggest popup, session picker, scroll-to-bottom pill and
+  collapsed tool bodies still hide and show (`.occ-hidden` changed), and the keyboard layout on
+  iPad/iPhone still resets after the keyboard closes (`removeProperty` replaced `= ""`).
+- ⏳ Server: restart it after merging; the new log module and frame decoder are exercised
+  only by an in-process check (no unit tests: shells are excluded from coverage).
+
 ## Phase 1 — Ship via BRAT (now)
 
 Remaining Phase-1 items need a real device/vault or a maintainer action — they can't
@@ -160,7 +211,7 @@ Required by the Developer Policies / Submission requirements:
   authenticated Claude subscription and Tailscale.
 - `[MUST]` ✅ Apply the two code fixes above (inline styles, settings heading).
 - `[MUST]` ✅ Confirm `manifest.description` is action-oriented, <=250 chars, ends with
-  a period, no special characters. Rephrased to lead with the action ("Chat with
+  a period, no special characters, and does not contain "Obsidian". Rephrased to lead with the action ("Chat with
   Claude in a structured sidebar, …").
 - `[MUST]` ✅ Do not add a `fundingUrl` unless donations are actually accepted. Still
   absent — fine.

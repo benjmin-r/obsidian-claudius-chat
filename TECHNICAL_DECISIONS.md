@@ -11,10 +11,48 @@ Each entry is ≤200 words (longer when a hard-won investigation is worth preser
 
 ---
 
-## TDL-20261117-003: Obsidian's official linter in the repo and CI; minAppVersion verified
+## TDL-20261117-004: Match the directory review: lint every package from a clean checkout, minAppVersion 1.7.2
 
 **Date:** 2026-11-17
 **Status:** Implemented
+
+**Context:** the first community.obsidian.md review (Review branch) reported
+errors and ~150 warnings that our `npm run lint` (0.6.0, plugin only) did not.
+Reproduced locally: the review runs **eslint-plugin-obsidianmd 0.5.0**, over
+**all packages** (including the server), from a checkout with **nothing built**.
+
+**Findings and decisions:**
+- *Unsafe-`any` flood (~120 warnings).* `@occ/protocol` resolved through
+  `types: dist/index.d.ts`, which does not exist before a build, so every
+  protocol type was an error type. `types` now points at `src/index.ts`; the
+  server's build uses `tsconfig.build.json`, which maps it back to `dist` (keeps
+  `rootDir: src`, so `dist/index.js` stays where the service units expect it).
+- *`minAppVersion` 1.7.2 (supersedes the version choice in TDL-20261117-003).*
+  0.5.0 trusts the bare `@since` tag, so `workspace.revealLeaf` needs 1.7.2.
+  The later per-version history says 1.4.0 would be fine, but the review is the
+  gate, and Obsidian 1.7.2 is from 2024. Revisit if the review's linter catches up.
+- *Description* must not contain "Obsidian" (a review rule, not in the docs).
+- *`console`:* the server logs through `server/src/log.ts` (stdout/stderr);
+  directives that disable `no-console` are themselves errors in the review.
+- *Timers:* `import { setInterval } from "node:timers"`; `window` does not exist
+  in Node, and the rule skips bound names.
+- *Style clears:* 0.5.0 flags `style.height = ""`; use `removeProperty`.
+- *`!important`:* removed where only our own rules compete (`.occ-hidden`,
+  `.occ-input-invalid`); kept on the toolbar icons, activity icon and keyboard
+  `flex: none`, which fight Obsidian's own styles (not verifiable headless).
+- *Accepted warnings:* `node:fs|os|path|http` imports in the server, and the
+  `!important` above. The server is a Node program, not part of `main.js`.
+
+**Files:** `eslint.config.mjs`, `package.json`, `manifest.json`, `versions.json`,
+`packages/protocol/package.json`, `packages/server/{tsconfig*.json,package.json,src/*}`,
+`packages/plugin/{styles.css,src/chat-view.ts}`, `docs/LAUNCH_CHECKLIST.md`.
+
+---
+
+## TDL-20261117-003: Obsidian's official linter in the repo and CI; minAppVersion verified
+
+**Date:** 2026-11-17
+**Status:** Implemented; the `minAppVersion` choice and "plugin only" scope superseded by TDL-20261117-004
 
 **Context:** the community directory's automated review runs the same checks as
 `eslint-plugin-obsidianmd`; the FAQ recommends running it locally. We had only

@@ -19,7 +19,7 @@ packages/
 npm install
 npm run build            # protocol, then server, then plugin (order matters)
 npm test                 # all three packages (Jest)
-npm run lint             # Obsidian's official linter on the plugin source; CI runs this
+npm run lint             # Obsidian's official linter on all packages (what the directory review runs); CI runs this
 npm run test:coverage    # enforces the per-package coverage thresholds; CI runs this
 ```
 

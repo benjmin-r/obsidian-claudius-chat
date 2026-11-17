@@ -158,6 +158,11 @@ remote agent), so be deliberate:
 ## Testing & code quality
 
 - `npm test` runs all packages; `npm run test:coverage` enforces **≥80%**.
+- `npm run lint` runs Obsidian's official linter over all three packages, the same
+  way the directory review does: from a clean checkout, nothing built. Keep it at
+  0 errors and 0 warnings. `@occ/protocol`'s `types` points at its source for that
+  reason; the server builds with `tsconfig.build.json`. The server logs through
+  `server/src/log.ts`, never `console` (TDL-20261117-004).
 - The server uses `tsconfig.test.json` for tests so `@occ/protocol` resolves to
   source across packages.
 - Formatting via Prettier (`.prettierrc`); match the surrounding style.
