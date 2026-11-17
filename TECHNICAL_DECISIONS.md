@@ -20,8 +20,12 @@ Each entry is ≤200 words (longer when a hard-won investigation is worth preser
 `eslint-plugin-obsidianmd`; the FAQ recommends running it locally. We had only
 run it in a scratch directory.
 
-**Decision:** new devDependencies at the repo root: `eslint` ^9,
+**Decision:** new devDependencies at the repo root: `eslint` ^10 (started on 9,
+bumped by Dependabot in #7),
 `eslint-plugin-obsidianmd` ^0.6 (recommended config) and `typescript-eslint` ^8.
+`eslint-plugin-obsidianmd` 0.6.0 does not officially declare ESLint 10 support;
+it works (same findings on both majors), and `.npmrc` sets `legacy-peer-deps=true`
+so the peer range does not block the install. Revisit when the plugin declares it.
 `npm run lint` lints `packages/plugin/src` only (server and protocol are plain
 Node) and runs in CI before the tests. It needs Node 20.19+; CI uses Node 20.x.
 Run it from the repo root: its `no-unsupported-api` rule reads `manifest.json`
