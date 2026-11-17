@@ -1,7 +1,8 @@
 name: Release plugin
 
 # Publishes a GitHub Release with the Obsidian plugin assets
-# (main.js, manifest.json, styles.css) whenever you push a version tag.
+# (main.js, manifest.json, styles.css) whenever you push a version tag, with a
+# build-provenance attestation for the three assets.
 #
 # Usage:
 #   1. Bump "version" in manifest.json (e.g. 0.2.0) and add it to versions.json
@@ -15,6 +16,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write      # sign the attestation
+  attestations: write  # store it, so users can verify the assets' provenance
 
 jobs:
   release:
@@ -42,6 +45,14 @@ jobs:
             echo "::error::Tag '$GITHUB_REF_NAME' does not match manifest version '$v'"
             exit 1
           fi
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            packages/plugin/main.js
+            manifest.json
+            packages/plugin/styles.css
 
       - name: Publish release with plugin assets
         env:
