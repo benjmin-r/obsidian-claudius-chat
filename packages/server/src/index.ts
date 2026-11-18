@@ -22,12 +22,22 @@ import { logInfo } from "./log";
 function main(): void {
 	const config = loadConfig();
 
-	// Reclaim any Agent-SDK subprocesses orphaned by a previous run (a hard crash skips
-	// node's exit-time teardown; KillMode=process leaves them behind). We have no children
-	// yet, so every match is a genuine orphan.
-	const swept = sweepOrphanedAgentsFromProc();
+	// Reclaim Agent-SDK subprocesses orphaned by a previous run of THIS server (a hard
+	// crash skips node's exit-time teardown; KillMode=process leaves them behind). We have
+	// no children yet. Ownership is the vault: children of sibling servers (other vaults)
+	// or foreign SDK apps are left alone.
+	const { swept, skipped } = sweepOrphanedAgentsFromProc(config.vaultCwd);
 	if (swept.length > 0) {
 		logInfo(`[occ] swept ${swept.length} orphaned agent subprocess(es) from a previous run: [${swept.join(",")}]`);
+	}
+	const unreadable = skipped.filter((s) => s.reason === "cwd-unreadable").map((s) => s.pid);
+	if (unreadable.length > 0) {
+		logInfo(`[occ] left ${unreadable.length} agent subprocess(es) alone, cwd unreadable: [${unreadable.join(",")}]`);
+	}
+	const otherVault = skipped.filter((s) => s.reason === "other-vault");
+	if (otherVault.length > 0) {
+		const list = otherVault.map((s) => `${s.pid}=${s.cwd}`).join(", ");
+		logInfo(`[occ] left ${otherVault.length} agent subprocess(es) of other vaults alone: [${list}]`);
 	}
 
 	let counter = 0;
