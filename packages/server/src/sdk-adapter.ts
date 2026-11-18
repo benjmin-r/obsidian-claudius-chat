@@ -13,7 +13,7 @@ import path from "node:path";
 import { deleteSession, getSessionMessages, listSessions, query, renameSession, tagSession } from "@anthropic-ai/claude-agent-sdk";
 import type { SdkMessage } from "@occ/protocol";
 import { classifyHolders, isDescendant, parseEntry, type RegistryEntry } from "./external-activity";
-import { sweepOrphanedAgents } from "./orphan-sweep";
+import { sweepOrphanedAgents, type SweepResult } from "./orphan-sweep";
 import type {
 	ArchiveStored,
 	DeleteStored,
@@ -145,13 +145,24 @@ function parentOf(pid: number): number | undefined {
 	}
 }
 
+function realpathOr(p: string): string {
+	try {
+		return fs.realpathSync(p);
+	} catch {
+		return p;
+	}
+}
+
 /**
- * Kill Agent-SDK subprocesses orphaned by a previous server run (hard crash). Call
- * once at startup, before any session spawns. Best-effort; returns the pids swept.
+ * Kill Agent-SDK subprocesses orphaned by a previous run of this server (hard crash).
+ * Only processes whose cwd is `vaultCwd` are ours; other vaults' children belong to
+ * sibling servers. Call once at startup, before any session spawns. Best-effort.
  */
-export function sweepOrphanedAgentsFromProc(): number[] {
+export function sweepOrphanedAgentsFromProc(vaultCwd: string): SweepResult {
 	return sweepOrphanedAgents({
 		ownPid: process.pid,
+		// /proc/<pid>/cwd is symlink-resolved, so compare against the resolved vault.
+		vaultCwd: realpathOr(vaultCwd),
 		listPids: () => {
 			try {
 				return fs.readdirSync("/proc").filter((d) => /^\d+$/.test(d)).map(Number);
@@ -167,6 +178,13 @@ export function sweepOrphanedAgentsFromProc(): number[] {
 			}
 		},
 		parentOf,
+		cwdOf: (pid) => {
+			try {
+				return fs.readlinkSync(`/proc/${pid}/cwd`);
+			} catch {
+				return undefined; // process gone, or another user's (EACCES)
+			}
+		},
 		kill: (pid) => {
 			try {
 				process.kill(pid, "SIGTERM");

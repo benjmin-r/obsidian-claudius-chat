@@ -70,7 +70,7 @@ On macOS there is no launchd unit. Run the foreground command under whatever you
 
 One server process serves one vault. For a second vault, copy the env file and the unit with a different name, port and `OCC_VAULT_CWD`, and give each its own token. In the plugin of each vault, point **Server URL** at that vault's port.
 
-**Caution (Linux):** on start-up a server kills any Claude Agent SDK subprocess on the machine that is not its own child (it assumes they are orphans from a crash). If you run several servers on one host, starting or restarting one will end the in-flight turns of the others. Restart them when the others are idle.
+On Linux, a server's start-up cleanup kills only Claude Agent SDK subprocesses whose working directory is its own vault (leftovers from a crash). Other servers' processes are left alone, so restarting one server does not end the others' turns.
 
 ## Security
 

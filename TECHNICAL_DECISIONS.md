@@ -11,6 +11,19 @@ Each entry is ≤200 words (longer when a hard-won investigation is worth preser
 
 ---
 
+## TDL-20261118-001: Start-up orphan sweep only kills subprocesses of its own vault
+
+**Date:** 2026-11-18
+**Status:** Implemented
+
+**Context:** the start-up sweep (added after the RAM-exhaustion incident, TDL-20260706-005 follow-up; never logged on its own) SIGTERMed every `claude-agent-sdk ... --input-format stream-json` process that was not its descendant. On a host with several servers, restarting one ended the others' in-flight turns (issue #4). It would equally kill an unrelated Agent-SDK app.
+
+**Decision:** ownership is the vault. Every SDK child runs with the server's `OCC_VAULT_CWD` as cwd, and one server serves one vault, so a match is swept only if `/proc/<pid>/cwd` equals our (realpath-resolved) vault and it is not our descendant. A different cwd, or an unreadable one, is skipped and logged.
+
+**Alternatives:** "parent is pid 1" (the issue's proposal) fixes sibling servers on system units but still kills foreign SDK apps whose parent crashed, and misses orphans reparented to a subreaper (`systemd --user`, container init). A cgroup match depends on systemd and leaks after a unit rename. An env tag read from `/proc/<pid>/environ` is explicit but would not cover orphans started before the upgrade.
+
+**Caveats:** two servers on the same vault would still sweep each other; that setup already conflicts on sessions. Orphans whose cwd is no longer the configured vault are left alone and leak until reboot or a manual kill: the agent can `chdir` itself (worktree sessions), and `OCC_VAULT_CWD` may change between runs (a deleted cwd reads as `"<path> (deleted)"`). Accepting subpaths of the vault would reclaim the worktree case but would again kill a sibling server whose vault is nested inside ours, so it was rejected; the skip log lists pid and cwd so a leak can be found. If it matters, tag the children (env var) instead of loosening the path match.
+
 ## TDL-20261117-005: Add Fable 5.1 and Haiku 5.5 to the picker; effort table gains both
 
 **Date:** 2026-11-17
